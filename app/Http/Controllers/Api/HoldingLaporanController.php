@@ -120,32 +120,42 @@ class HoldingLaporanController extends Controller
         ])->orderBy('kode_akun', 'ASC')->get();
 
         // Transform: lev1 → akun2 → akun3 (tanpa rekening) sesuai HOLDING-API.md §4.1
+        // Saldo dihitung per-rekening via Keuangan::komSaldo lalu diagregat ke atas
+        // (sama persis dengan view PelaporanController/view/neraca.blade.php).
         $data = $akun1->map(function ($a1) use ($keuangan) {
+            $sumA1 = 0;
+            $akun2Out = $a1->akun2->map(function ($a2) use ($keuangan, &$sumA1) {
+                $sumA2 = 0;
+                $akun3Out = $a2->akun3->map(function ($a3) use ($keuangan, &$sumA2) {
+                    $sumA3 = 0;
+                    foreach ($a3->rek as $rek) {
+                        $sumA3 += (float) $keuangan->komSaldo($rek);
+                    }
+                    $sumA2 += $sumA3;
+                    return [
+                        'kode_akun' => $a3->kode_akun,
+                        'nama_akun' => $a3->nama_akun,
+                        'saldo'     => (float) $sumA3,
+                    ];
+                })->values();
+                $sumA1 += $sumA2;
+                return [
+                    'kode_akun' => $a2->kode_akun,
+                    'nama_akun' => $a2->nama_akun,
+                    'saldo'     => (float) $sumA2,
+                    'akun3'     => $akun3Out,
+                ];
+            })->values();
             return [
                 'kode_akun' => $a1->kode_akun,
                 'nama_akun' => $a1->nama_akun,
                 'lev1'      => (string) $a1->lev1,
-                'saldo'     => (float) $a1->saldo, // accessor kalau ada
-                'akun2'     => $a1->akun2->map(function ($a2) use ($keuangan) {
-                    return [
-                        'kode_akun' => $a2->kode_akun,
-                        'nama_akun' => $a2->nama_akun,
-                        'saldo'     => (float) $a2->saldo,
-                        'akun3'     => $a2->akun3->map(function ($a3) {
-                            return [
-                                'kode_akun' => $a3->kode_akun,
-                                'nama_akun' => $a3->nama_akun,
-                                'saldo'     => (float) $a3->saldo,
-                            ];
-                        })->values(),
-                    ];
-                })->values(),
+                'saldo'     => (float) $sumA1,
+                'akun2'     => $akun2Out,
             ];
         })->values();
 
         // Hitung ringkasan: total_aset, total_liabilitas_ekuitas, selisih
-        // Asumsi lev1=1=aset, lev1=2&3=liab+ekuitas. AkunLevel1 accessor 'saldo'
-        // harus menjumlahkan akun2 → akun3. Kalau tidak ada, hitung manual di sini.
         $totalAset = (float) $data->where('lev1', '1')->sum('saldo');
         $totalLE   = (float) $data->whereIn('lev1', ['2', '3'])->sum('saldo');
 
@@ -304,8 +314,10 @@ class HoldingLaporanController extends Controller
 
             $sum = 0;
             foreach ($parent->child as $child) {
-                $debitSum  = (float) $child->rek_debit->rek->flatMap->trx_debit->sum('debit');
-                $kreditSum = (float) $child->rek_kredit->rek->flatMap->trx_kredit->sum('kredit');
+                $debitTrx  = optional(optional($child->rek_debit)->rek)->flatMap->trx_debit ?? collect();
+                $kreditTrx = optional(optional($child->rek_kredit)->rek)->flatMap->trx_kredit ?? collect();
+                $debitSum  = (float) $debitTrx->sum('debit');
+                $kreditSum = (float) $kreditTrx->sum('kredit');
                 $childSaldo = $debitSum - $kreditSum;
                 $sum += $childSaldo;
 
@@ -376,6 +388,7 @@ class HoldingLaporanController extends Controller
     public function perubahanEkuitas(Request $request): JsonResponse
     {
         $p = $this->validatePeriode($request);
+        $keuangan = new Keuangan;
 
         // Rekening lev1=3 (ekuitas), eager-load kom_saldo untuk tahun & bulan tsb
         $rekening = Rekening::where('lev1', '3')->with([
@@ -395,12 +408,23 @@ class HoldingLaporanController extends Controller
         $labaRugi = 0;
         $ekuitasAkhir = 0;
 
-        // tgl_awal: awal tahun (untuk saldo awal)
-        $tglAwal = $p['tahun'].'-01-00'; // convention: bulan 0 = saldo awal tahun
-
         foreach ($rekening as $r) {
-            $saldo = (float) $r->saldo; // accessor kalau ada; kalau tidak, hitung manual
-            $saldoAkhir = (float) $r->saldo;
+            // Hitung saldo_awal (bulan=0) dan saldo_akhir (bulan=periode) manual
+            // dari kom_saldo, mengikuti pola Keuangan::komSaldo.
+            $awalDebit = $awalKredit = $mutasiDebit = $mutasiKredit = 0;
+            foreach ($r->kom_saldo as $k) {
+                if ((int) $k->bulan === 0) {
+                    $awalDebit  += (float) $k->debit;
+                    $awalKredit += (float) $k->kredit;
+                } else {
+                    $mutasiDebit  += (float) $k->debit;
+                    $mutasiKredit += (float) $k->kredit;
+                }
+            }
+            // lev1=3 = ekuitas, posisi normal Kredit → saldo_awal = kredit - debit
+            $saldoAwal   = $awalKredit - $awalDebit;
+            $saldoMutasi = $mutasiKredit - $mutasiDebit;
+            $saldoAkhir  = $saldoAwal + $saldoMutasi;
 
             // Apply special case 3.2.02.01
             if ($r->kode_akun === '3.2.02.01') {
@@ -410,19 +434,18 @@ class HoldingLaporanController extends Controller
                 }
             }
 
-            $mutasi = $saldoAkhir - $saldo;
+            $mutasi = $saldoAkhir - $saldoAwal;
             $data[] = [
                 'kode_akun'   => $r->kode_akun,
                 'nama_akun'   => $r->nama_akun,
-                'saldo_awal'  => $saldo,
-                'saldo_akhir' => $saldoAkhir,
-                'mutasi'      => $mutasi,
+                'saldo_awal'  => (float) $saldoAwal,
+                'saldo_akhir' => (float) $saldoAkhir,
+                'mutasi'      => (float) $mutasi,
             ];
 
             $ekuitasAkhir += $saldoAkhir;
-            // Kategorisasi berdasarkan kode akun
             if (str_starts_with($r->kode_akun, '3.1')) {
-                $ekuitasAwal += $saldo;
+                $ekuitasAwal += $saldoAwal;
             }
             if (str_starts_with($r->kode_akun, '3.2.01.01')) {
                 $setoran += $mutasi;
@@ -472,6 +495,7 @@ class HoldingLaporanController extends Controller
     public function calk(Request $request): JsonResponse
     {
         $p = $this->validatePeriode($request);
+        $keuangan = new Keuangan;
         $lokasi = session('lokasi');
 
         // Akun1 → akun2 → akun3 → rekening (pohon 4-level)
@@ -485,33 +509,43 @@ class HoldingLaporanController extends Controller
             },
         ])->orderBy('kode_akun', 'ASC')->get();
 
-        $rincianAkun = $akun1->map(function ($a1) {
+        $rincianAkun = $akun1->map(function ($a1) use ($keuangan) {
+            $sumA1 = 0;
+            $akun2Out = $a1->akun2->map(function ($a2) use ($keuangan, &$sumA1) {
+                $sumA2 = 0;
+                $akun3Out = $a2->akun3->map(function ($a3) use ($keuangan, &$sumA2) {
+                    $sumA3 = 0;
+                    $rekOut = $a3->rek->map(function ($rek) use ($keuangan, &$sumA3) {
+                        $s = (float) $keuangan->komSaldo($rek);
+                        $sumA3 += $s;
+                        return [
+                            'kode_akun' => $rek->kode_akun,
+                            'nama_akun' => $rek->nama_akun,
+                            'saldo'     => $s,
+                        ];
+                    })->values();
+                    $sumA2 += $sumA3;
+                    return [
+                        'kode_akun' => $a3->kode_akun,
+                        'nama_akun' => $a3->nama_akun,
+                        'saldo'     => (float) $sumA3,
+                        'rekening'  => $rekOut,
+                    ];
+                })->values();
+                $sumA1 += $sumA2;
+                return [
+                    'kode_akun' => $a2->kode_akun,
+                    'nama_akun' => $a2->nama_akun,
+                    'saldo'     => (float) $sumA2,
+                    'akun3'     => $akun3Out,
+                ];
+            })->values();
             return [
                 'kode_akun' => $a1->kode_akun,
                 'nama_akun' => $a1->nama_akun,
                 'lev1'      => (string) $a1->lev1,
-                'saldo'     => (float) $a1->saldo,
-                'akun2'     => $a1->akun2->map(function ($a2) {
-                    return [
-                        'kode_akun' => $a2->kode_akun,
-                        'nama_akun' => $a2->nama_akun,
-                        'saldo'     => (float) $a2->saldo,
-                        'akun3'     => $a2->akun3->map(function ($a3) {
-                            return [
-                                'kode_akun' => $a3->kode_akun,
-                                'nama_akun' => $a3->nama_akun,
-                                'saldo'     => (float) $a3->saldo,
-                                'rekening'  => $a3->rek->map(function ($rek) {
-                                    return [
-                                        'kode_akun' => $rek->kode_akun,
-                                        'nama_akun' => $rek->nama_akun,
-                                        'saldo'     => (float) $rek->saldo,
-                                    ];
-                                })->values(),
-                            ];
-                        })->values(),
-                    ];
-                })->values(),
+                'saldo'     => (float) $sumA1,
+                'akun2'     => $akun2Out,
             ];
         })->values();
 
@@ -583,33 +617,16 @@ class HoldingLaporanController extends Controller
     }
 
     /**
-     * Hitung laba rugi berjalan untuk override special case 3.2.02.01.
-     * Mengikuti pola yang dipakai PelaporanController: Keuangan::laporan_laba_rugi
-     * untuk mode Tahunan full-year atau Bulanan ytd.
+     * Hitung laba rugi berjalan (YTD) untuk override special case 3.2.02.01.
+     * Delegate ke Keuangan::laba_rugi() yang sudah battle-tested di view tenant.
      */
     private function labaRugiBerjalan(string $tglKondisi): ?float
     {
         try {
             $keuangan = new Keuangan;
-            $jenis = 'Tahunan';
-            $lr = $keuangan->laporan_laba_rugi($tglKondisi, $jenis);
-
-            $pendapatan = 0; $beban = 0; $pendapatanNonOps = 0; $bebanNonOps = 0;
-            foreach ($lr['pendapatan'] ?? [] as $g) {
-                foreach ($g['rek'] ?? [] as $r) $pendapatan += (float) $r['saldo'];
-            }
-            foreach ($lr['beban'] ?? [] as $g) {
-                foreach ($g['rek'] ?? [] as $r) $beban += (float) $r['saldo'];
-            }
-            foreach ($lr['pendapatan_non_ops'] ?? [] as $g) {
-                foreach ($g['rek'] ?? [] as $r) $pendapatanNonOps += (float) $r['saldo'];
-            }
-            foreach ($lr['beban_non_ops'] ?? [] as $g) {
-                foreach ($g['rek'] ?? [] as $r) $bebanNonOps += (float) $r['saldo'];
-            }
-
-            return $pendapatan + $pendapatanNonOps - $beban - $bebanNonOps;
+            return (float) $keuangan->laba_rugi($tglKondisi);
         } catch (\Throwable $e) {
+            \Log::warning('labaRugiBerjalan failed: '.$e->getMessage());
             return null;
         }
     }

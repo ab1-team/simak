@@ -1,6 +1,9 @@
 <?php
 ini_set('memory_limit', '3072M');
 ini_set('max_execution_time', '300');
+// PHP 8.4 + Laravel 10: silence implicit-nullable deprecations dari vendor
+// agar tidak printed ke response body sebelum headers terkirim.
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
 
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Http\Request;

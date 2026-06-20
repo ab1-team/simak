@@ -14,13 +14,6 @@ class HoldingLicense
         $token = $request->header('X-Holding-Token');
         $slug  = $request->header('X-Holding-Tenant');
 
-        \Log::debug('HoldingLicense.in', [
-            'token_len' => strlen($token ?? ''),
-            'slug'      => $slug,
-            'path'      => $request->path(),
-            'all_h'     => $request->headers->all()['x-holding-token'] ?? 'none',
-        ]);
-
         if (! $token || ! $slug) {
             return response()->json([
                 'success' => false,
@@ -38,22 +31,6 @@ class HoldingLicense
                 $q->where('domain', $slug)->orWhere('domain_alt', $slug);
             })
             ->first();
-
-        \Log::debug('HoldingLicense.lookup', [
-            'found'    => $license ? true : false,
-            'token_eq' => $license ? ($license->api_secret === $token) : null,
-            'active'   => $license?->is_active,
-            'expired'  => $license?->isExpired(),
-            'sql'      => License::with('usaha')
-                ->where('api_secret', $token)
-                ->where('is_active', 1)
-                ->where(function ($q) {
-                    $q->whereNull('expired_at')->orWhere('expired_at', '>', now());
-                })
-                ->whereHas('usaha', function ($q) use ($slug) {
-                    $q->where('domain', $slug)->orWhere('domain_alt', $slug);
-                })->toSql(),
-        ]);
 
         if (! $license) {
             return response()->json([
