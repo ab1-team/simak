@@ -61,6 +61,12 @@
                     </li>
                 </ul>
             </li>
+            <li class="{{ active('/license') }} nav-item">
+                <a href="/db/license">
+                    <i class="icon-key"></i>
+                    <span class="menu-title">License</span>
+                </a>
+            </li>
         </ul>
     </div>
 </div>

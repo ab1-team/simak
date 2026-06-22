@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AppController;
 use App\Http\Controllers\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Admin\InvoiceController;
+use App\Http\Controllers\Admin\LicenseController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
@@ -58,6 +59,12 @@ Route::middleware('maintenance')->group(function () {
         Route::get('/paid', [InvoiceController::class, 'paid'])->middleware('master');
 
         Route::put('/invoice/{invoice}/edit', [InvoiceController::class, 'update'])->middleware('master');
+
+        Route::get('/license', [LicenseController::class, 'index'])->middleware('master');
+        Route::post('/license', [LicenseController::class, 'store'])->middleware('master');
+        Route::get('/license/{license}', [LicenseController::class, 'show'])->middleware('master');
+        Route::put('/license/{license}', [LicenseController::class, 'update'])->middleware('master');
+        Route::delete('/license/{license}', [LicenseController::class, 'destroy'])->middleware('master');
 
         Route::post('/logout', [AdminAuthController::class, 'logout'])->middleware('master');
     });
