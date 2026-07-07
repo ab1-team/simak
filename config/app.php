@@ -128,6 +128,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | SSO (Holding → Subsidiary)
+    |--------------------------------------------------------------------------
+    |
+    | Shared HMAC secret used by SsoTokenVerifier to validate auto-login tokens
+    | issued by the Holding app. MUST be identical to the value configured on
+    | the Holding side. Anyone holding this secret can forge SSO tokens —
+    | rotate it on both sides simultaneously if it leaks.
+    |
+    */
+    'sso_secret' => env('SSO_SECRET'),
+
+    // SSO token lifetime (seconds). Should match Holding's TTL.
+    'sso_ttl' => (int) env('SSO_TTL', 300),
+
+    /*
+    |--------------------------------------------------------------------------
     | Maintenance Mode Driver
     |--------------------------------------------------------------------------
     |

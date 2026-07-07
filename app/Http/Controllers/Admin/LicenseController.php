@@ -30,8 +30,8 @@ class LicenseController extends Controller
                 })
                 ->editColumn('is_active', function ($row) {
                     return $row->is_active
-                        ? '<span class="badge badge-success">Aktif</span>'
-                        : '<span class="badge badge-secondary">Nonaktif</span>';
+                        ? '<span class="badge badge-success">is_active</span>'
+                        : '<span class="badge badge-secondary">nonactive</span>';
                 })
                 ->editColumn('expired_at', function ($row) {
                     if (!$row->expired_at) {

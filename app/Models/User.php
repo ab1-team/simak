@@ -13,6 +13,15 @@ class User extends Authenticatable
 
     protected $guarded = ['id'];
 
+    /**
+     * Active flag accessor — local convention: status == '1'.
+     * SSO consumer uses this to reject disabled accounts.
+     */
+    public function isActive(): bool
+    {
+        return (string) $this->status === '1';
+    }
+
     public function j()
     {
         return $this->belongsTo(Jabatan::class, 'jabatan');

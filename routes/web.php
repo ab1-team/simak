@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\LicenseController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Auth\SsoController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DesaController;
 use App\Http\Controllers\GenerateController;
@@ -213,3 +214,10 @@ Route::middleware('maintenance')->group(function () {
 
     Route::get('/{invoice}', [PelaporanController::class, 'invoice']);
 });
+
+// SSO entry from Holding — must stay outside the maintenance group so the
+// Holding dashboard can still reach us during planned downtime. Only valid
+// when caller is not yet authenticated locally.
+Route::get('/auth/sso', [SsoController::class, 'consume'])
+    ->name('auth.sso')
+    ->middleware('guest');

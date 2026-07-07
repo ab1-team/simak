@@ -17,7 +17,7 @@
                             <th>#</th>
                             <th>Usaha</th>
                             <th>API Secret</th>
-                            <th>Status</th>
+                            <th>is_active</th>
                             <th>Tanggal Berakhir</th>
                             <th>Aksi</th>
                         </tr>
@@ -62,7 +62,7 @@
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Status License</label>
+                            <label class="form-label">is_active</label>
                             <div class="d-flex align-items-center">
                                 <label class="switch mr-1">
                                     <input type="checkbox" name="is_active" id="is_active" checked>
@@ -162,9 +162,9 @@
                     name: 'api_secret'
                 },
                 {
-                    data: 'status',
-                    name: 'status',
-                    orderable: false,
+                    data: 'is_active',
+                    name: 'is_active',
+                    orderable: true,
                     searchable: false
                 },
                 {
