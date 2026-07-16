@@ -651,6 +651,26 @@ class PelaporanController extends Controller
             ['kode_akun', $data['kec']->kd_kec],
             ['tahun', $thn],
         ])->get();
+
+        if (Session::get('jenis_akun') == '7') {
+            $keuangan = new Keuangan();
+            $lr = $keuangan->laba_rugiv2((int) $thn, (int) $data['bulan']);
+
+            $total_penjualan = collect($lr['sections']['penjualan'])->sum('saldo');
+            $total_beban_operasional = collect($lr['sections']['beban_operasional'])->sum('saldo');
+            $total_pendapatan_non_usaha = collect($lr['sections']['pendapatan_non_usaha'])->sum('saldo');
+            $total_beban_non_usaha = collect($lr['sections']['beban_non_usaha'])->sum('saldo');
+            $total_beban_pajak = collect($lr['sections']['beban_pajak'])->sum('saldo');
+
+            $total_pembelian = $lr['pembelian_persediaan'] - $lr['potongan_pembelian'];
+            $total_persediaan = $lr['persediaan_awal'] + $total_pembelian;
+            $hpp = $total_persediaan - $lr['persediaan_akhir'];
+            $laba_kotor = $total_penjualan - $hpp;
+
+            $laba_sebelum_pajak = $laba_kotor - $total_beban_operasional + $total_pendapatan_non_usaha - $total_beban_non_usaha;
+            $data['laba_bersih_v2'] = $laba_sebelum_pajak - $total_beban_pajak;
+        }
+
         $view = view('pelaporan.view.calk', $data)->render();
 
         if ($data['type'] == 'pdf') {

@@ -267,6 +267,10 @@
                                             if ($rek->kode_akun == '3.3.03.01') {
                                                 $saldo = $keuangan->laba_rugi($tgl_kondisi);
                                             }
+                                        } elseif (Session::get('jenis_akun') == '7') {
+                                            if ($rek->kode_akun == '3.2.02.01') {
+                                                $saldo = $laba_bersih_v2 ?? $keuangan->laba_rugi($tgl_kondisi);
+                                            }
                                         } else {
                                             if ($rek->kode_akun == '3.2.02.01') {
                                                 $saldo = $keuangan->laba_rugi($tgl_kondisi);
