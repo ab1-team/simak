@@ -124,7 +124,7 @@
         {{-- POTONGAN PEMBELIAN (H) --}}
         @foreach ($potongan_akun as $acc)
             <tr>
-                <td class="l b">{{ $acc['kode_akun'] }}</td>
+                <td class="l b"></td>
                 <td class="l b r">{{ $acc['nama'] }}</td>
                 <td class="b r" align="right">{{ formatKurung($acc['saldo']) }}</td>
             </tr>
