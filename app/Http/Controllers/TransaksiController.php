@@ -27,6 +27,7 @@ use PDF;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
 use Session;
 
@@ -2558,7 +2559,7 @@ class TransaksiController extends Controller
         ])->first();
 
         $logo = $data['kec']->logo;
-        $data['gambar'] = '/storage/logo/' . $logo;
+        $data['gambar'] = $this->logoDataUri($logo);
         $data['keuangan'] = $keuangan;
 
         $view = view('transaksi.dokumen.cetak', $data)->render();
@@ -2587,7 +2588,7 @@ class TransaksiController extends Controller
         ])->first();
 
         $logo = $data['kec']->logo;
-        $data['gambar'] = '/storage/logo/' . $logo;
+        $data['gambar'] = $this->logoDataUri($logo);
         $data['keuangan'] = $keuangan;
 
         $view = view('transaksi.dokumen.cetak', $data)->render();
@@ -2597,6 +2598,18 @@ class TransaksiController extends Controller
 
     public function cetakKuitansi(Request $request)
     {
+    }
+
+    private function logoDataUri($logo)
+    {
+        $name = $logo ?: '1.png';
+        $path = 'public/logo/' . $name;
+        if (!Storage::exists($path)) {
+            return '';
+        }
+        $bytes = Storage::get($path);
+        $mime = Str::endsWith(strtolower($name), '.png') ? 'image/png' : 'image/jpeg';
+        return 'data:' . $mime . ';base64,' . base64_encode($bytes);
     }
 
     public function lpp($id)
