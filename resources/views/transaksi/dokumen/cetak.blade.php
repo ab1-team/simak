@@ -146,15 +146,15 @@
                 <table border="0" width="100%" style="border-bottom: 1px solid #000;">
                     <tr>
                         <td width="40">
-                            <img src="../storage/app/public/logo/{{ $gambar }}" width="50" height="50">
+                            <img src="{{ $gambar }}" width="50" height="50">
                         </td>
                         <td>
-                            <div class="fw-bold">{{ strtoupper($kec->nama_lembaga_sort) }}</div>
+                            <div class="fw-bold">{{ strtoupper($usaha->nama_usaha) }}</div>
                             <div class="fw-bold">
-                                {{ strtoupper('Kec. ' . $kec->nama_kec . ' Kab. ' . $kec->kabupaten->nama_kab . ' ' . $kec->kabupaten->nama_prov) }}
+                                {{ strtoupper('Kec. ' . $usaha->d->kec->nama_kec . ' Kab. ' . $usaha->d->kec->kabupaten->nama_kab . ' ' . $usaha->d->kec->kabupaten->nama_prov) }}
                             </div>
-                            <div style="font-size: 8px;">{{ 'SK Kemenkumham RI No. ' . $kec->nomor_bh }}</div>
-                            <div style="font-size: 8px;">{{ $kec->alamat_kec . ', Telp. ' . $kec->telpon_kec }}</div>
+                            <div style="font-size: 8px;">{{ 'SK Kemenkumham RI No. ' . $usaha->nomor_bh }}</div>
+                            <div style="font-size: 8px;">{{ $usaha->alamat . ', Telp. ' . $usaha->telpon }}</div>
                         </td>
                         <td>
                             <div style="display: flex; align-items: center; font-size: 8px;">

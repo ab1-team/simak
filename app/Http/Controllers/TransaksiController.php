@@ -2557,9 +2557,9 @@ class TransaksiController extends Controller
             ['lokasi', Session::get('lokasi')]
         ])->first();
 
-        $usaha = Usaha::where('id', Session::get('lokasi'))->first();
-        $logo = $usaha->logo;
-        $data['gambar'] = $logo;
+        $usaha = Usaha::where('id', Session::get('lokasi'))->with(['d', 'd.kec', 'd.kec.kabupaten'])->first();
+        $data['usaha'] = $usaha;
+        $data['gambar'] = '/storage/logo/' . $usaha->logo;
         $data['keuangan'] = $keuangan;
 
         $view = view('transaksi.dokumen.cetak', $data)->render();
@@ -2587,9 +2587,9 @@ class TransaksiController extends Controller
             ['lokasi', Session::get('lokasi')]
         ])->first();
 
-        $usaha = Usaha::where('id', Session::get('lokasi'))->first();
-        $logo = $usaha->logo;
-        $data['gambar'] = $logo;
+        $usaha = Usaha::where('id', Session::get('lokasi'))->with(['d', 'd.kec', 'd.kec.kabupaten'])->first();
+        $data['usaha'] = $usaha;
+        $data['gambar'] = '/storage/logo/' . $usaha->logo;
         $data['keuangan'] = $keuangan;
 
         $view = view('transaksi.dokumen.cetak', $data)->render();
