@@ -2603,11 +2603,11 @@ class TransaksiController extends Controller
     private function logoDataUri($logo)
     {
         $name = $logo ?: '1.png';
-        $path = 'logo/' . $name;
-        if (!Storage::disk('public')->exists($path)) {
+        $abs = storage_path('app/public/logo/' . $name);
+        if (!is_file($abs)) {
             return '';
         }
-        $bytes = Storage::disk('public')->get($path);
+        $bytes = file_get_contents($abs);
         $mime = Str::endsWith(strtolower($name), '.png') ? 'image/png' : 'image/jpeg';
         return 'data:' . $mime . ';base64,' . base64_encode($bytes);
     }
