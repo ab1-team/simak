@@ -2559,7 +2559,7 @@ class TransaksiController extends Controller
 
         $usaha = Usaha::where('id', Session::get('lokasi'))->first();
         $logo = $usaha->logo;
-        $data['gambar'] = '/storage/logo/' . $logo;
+        $data['gambar'] = $logo;
         $data['keuangan'] = $keuangan;
 
         $view = view('transaksi.dokumen.cetak', $data)->render();
@@ -2589,7 +2589,7 @@ class TransaksiController extends Controller
 
         $usaha = Usaha::where('id', Session::get('lokasi'))->first();
         $logo = $usaha->logo;
-        $data['gambar'] = '/storage/logo/' . $logo;
+        $data['gambar'] = $logo;
         $data['keuangan'] = $keuangan;
 
         $view = view('transaksi.dokumen.cetak', $data)->render();
