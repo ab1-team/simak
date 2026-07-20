@@ -2558,7 +2558,7 @@ class TransaksiController extends Controller
         ])->first();
 
         $logo = $data['kec']->logo;
-        $data['gambar'] = $logo;
+        $data['gambar'] = '/storage/logo/' . $logo;
         $data['keuangan'] = $keuangan;
 
         $view = view('transaksi.dokumen.cetak', $data)->render();
@@ -2587,7 +2587,7 @@ class TransaksiController extends Controller
         ])->first();
 
         $logo = $data['kec']->logo;
-        $data['gambar'] = $logo;
+        $data['gambar'] = '/storage/logo/' . $logo;
         $data['keuangan'] = $keuangan;
 
         $view = view('transaksi.dokumen.cetak', $data)->render();
