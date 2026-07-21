@@ -378,3 +378,19 @@ form .form-section {
     background-color: var(--primary);
     border-color: var(--primary);
 }
+
+/* ---------- SweetAlert2 (logout confirm) ---------- */
+
+.swal2-confirm {
+    background-color: var(--primary) !important;
+    color: #FFFFFF !important;
+    border-color: var(--primary) !important;
+}
+.swal2-confirm:hover,
+.swal2-confirm:focus {
+    background-color: var(--primary-hover) !important;
+}
+.swal2-cancel {
+    background-color: #6c757d !important;
+    color: #FFFFFF !important;
+}
