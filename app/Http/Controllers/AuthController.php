@@ -40,7 +40,11 @@ class AuthController extends Controller
             $logo = '/storage/logo/'.$usaha->logo;
         }
 
-        return view('auth.login')->with(compact('usaha', 'logo'));
+        $appTheme = (in_array($usaha->theme ?? 'default', ['default', 'merah-putih'], true))
+            ? $usaha->theme
+            : 'default';
+
+        return view('auth.login')->with(compact('usaha', 'logo', 'appTheme'));
     }
 
     public function register()
@@ -60,7 +64,11 @@ class AuthController extends Controller
             $logo = '/storage/logo/'.$usaha->logo;
         }
 
-        return view('auth.register')->with(compact('usaha', 'logo'));
+        $appTheme = (in_array($usaha->theme ?? 'default', ['default', 'merah-putih'], true))
+            ? $usaha->theme
+            : 'default';
+
+        return view('auth.register')->with(compact('usaha', 'logo', 'appTheme'));
     }
 
     public function provinsi()
