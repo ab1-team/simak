@@ -29,6 +29,10 @@ class AppServiceProvider extends ServiceProvider
         // Tema merah-putih adalah fitur opsional yang diset manual di DB
         // (bukan UI switcher). Cache 5 menit; flush manual setelah update.
         View::composer('*', function ($view) {
+            if ($view->offsetExists('appTheme')) {
+                return;
+            }
+
             $theme = 'default';
 
             if (Session::get('lokasi')) {
