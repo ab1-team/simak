@@ -1,0 +1,380 @@
+/* =====================================================================
+   Theme Merah-Putih (Bendera Indonesia) — Opsional via kolom `usaha.theme`
+   =====================================================================
+   Override-only: TIDAK redefinisi Frest, hanya menimpa palette jadi merah.
+   Diload kondisional di layouts/base.blade.php jika $appTheme === 'merah-putih'.
+   Load SETELAH app.css agar specificity menang.
+
+   Palette:
+     --primary:        #CE1126  (merah bendera Indonesia)
+     --primary-hover:  #B10E20
+     --primary-active: #990C1B
+     --bg-soft:        #FFF5F6  (putih dengan hint merah)
+   ===================================================================== */
+
+:root {
+    --primary: #CE1126;
+    --primary-hover: #B10E20;
+    --primary-active: #990C1B;
+    --bg-soft: #FFF5F6;
+    --dt-row-selected: 206, 17, 38;
+}
+
+/* ---------- Body & Links ---------- */
+
+body {
+    background-color: var(--bg-soft) !important;
+}
+
+html body a {
+    color: var(--primary);
+}
+html body a:hover {
+    color: var(--primary-hover);
+}
+
+/* ---------- Pace / Loading Indicator ---------- */
+
+html body .pace .pace-progress {
+    background: var(--primary);
+}
+
+/* ---------- Navbar ---------- */
+
+.navbar.navbar-light.navbar-bg-color {
+    background-color: #FFFFFF !important;
+    border-bottom: 2px solid var(--primary) !important;
+}
+.navbar-light .navbar-nav .nav-link,
+.navbar-light .navbar-nav .nav-link i {
+    color: var(--primary) !important;
+}
+.navbar-light .navbar-nav .nav-link:hover {
+    color: var(--primary-hover) !important;
+}
+
+/* ---------- Sidebar menu-dark ---------- */
+
+.main-menu.menu-light {
+    border-right: 2px solid var(--primary) !important;
+}
+.main-menu.menu-dark {
+    color: #f3a5ad;
+    background: #59060D !important;
+}
+.main-menu.menu-dark .main-menu-header .menu-search {
+    background: #3a0307;
+    color: #d97a82;
+}
+.main-menu.menu-dark .main-menu-header .menu-search:focus {
+    border-color: #2a0205;
+}
+.main-menu.menu-dark .navigation {
+    background: #59060D;
+}
+.main-menu.menu-dark .navigation .navigation-header {
+    color: #f3a5ad;
+}
+.main-menu.menu-dark .navigation li a {
+    color: #f3a5ad;
+}
+.main-menu.menu-dark .navigation > li.open > a {
+    color: #d97a82;
+    background: #760813;
+    border-right: 4px solid var(--primary);
+}
+.main-menu.menu-dark .navigation > li.hover > a,
+.main-menu.menu-dark .navigation > li:hover > a,
+.main-menu.menu-dark .navigation > li.active > a {
+    color: #FFFFFF;
+}
+.main-menu.menu-dark .navigation > li.active > a {
+    color: #FFFFFF;
+    font-weight: 700;
+}
+
+/* ---------- Sidebar menu-bg-default (gradient override) ---------- */
+
+.main-menu.menu-bg-default {
+    background: linear-gradient(#59060D, #2a0205) !important;
+    -webkit-box-shadow: 0px 0px 8px rgba(89, 6, 13, 0.7) !important;
+    box-shadow: 0px 0px 8px rgba(89, 6, 13, 0.7) !important;
+}
+.main-menu.menu-bg-default .navigation {
+    background: transparent;
+}
+
+/* ---------- Sidebar menu-light active border ---------- */
+
+.main-menu.menu-light .navigation > li.open > a {
+    border-right: 4px solid var(--primary);
+}
+.main-menu.menu-light .navigation > li.hover > a,
+.main-menu.menu-light .navigation > li:hover > a,
+.main-menu.menu-light .navigation > li.active > a,
+.main-menu.menu-light .navigation > li .active > a {
+    color: var(--primary);
+}
+
+/* ---------- Card ---------- */
+
+.card {
+    border-top: 3px solid var(--primary);
+}
+
+/* ---------- Primary Button (Frest original --primary 5 shade) ---------- */
+
+.btn-primary {
+    border-color: #B10E20 !important;
+    background-color: var(--primary) !important;
+    color: #FFFFFF;
+}
+.btn-primary:hover {
+    border-color: var(--primary) !important;
+    background-color: #E83347 !important;
+    color: #FFF !important;
+}
+.btn-primary:focus,
+.btn-primary:active {
+    border-color: #B10E20 !important;
+    background-color: var(--primary-active) !important;
+    color: #FFF !important;
+}
+.btn-primary.btn-glow {
+    box-shadow: 0px 1px 20px 1px rgba(206, 17, 38, 0.6);
+}
+
+/* ---------- Outline primary ---------- */
+
+.btn-outline-primary {
+    border-color: var(--primary);
+    background-color: transparent;
+    color: var(--primary);
+}
+.btn-outline-primary:hover {
+    background-color: var(--primary);
+    color: #FFF !important;
+}
+
+/* ---------- Backgrounds primary ---------- */
+
+.bg-primary {
+    background-color: var(--primary) !important;
+}
+.bg-primary.bg-glow {
+    box-shadow: 0px 1px 20px 1px rgba(206, 17, 38, 0.6);
+}
+.overlay-primary {
+    background: var(--primary);
+    background: rgba(206, 17, 38, 0.8);
+}
+.border-primary,
+.border-top-primary,
+.border-bottom-primary,
+.border-left-primary,
+.border-right-primary {
+    border-color: var(--primary) !important;
+}
+input:focus ~ .bg-primary {
+    box-shadow: 0 0 0 0.075rem #fff, 0 0 0 0.21rem var(--primary) !important;
+}
+
+/* ---------- Danger button (semantic = primary merah) ---------- */
+
+.btn-danger {
+    border-color: #B10E20 !important;
+    background-color: var(--primary) !important;
+    color: #FFFFFF;
+}
+.btn-danger:hover {
+    border-color: var(--primary) !important;
+    background-color: #E83347 !important;
+    color: #FFF !important;
+}
+.btn-danger:focus,
+.btn-danger:active {
+    border-color: #B10E20 !important;
+    background-color: var(--primary-active) !important;
+    color: #FFF !important;
+}
+.btn-danger.btn-glow {
+    box-shadow: 0px 1px 20px 1px rgba(206, 17, 38, 0.6);
+}
+
+/* ---------- Success button (semantic = marun tua #760813) ---------- */
+
+.btn-success {
+    border-color: #59060D !important;
+    background-color: #760813 !important;
+    color: #FFFFFF;
+}
+.btn-success:hover {
+    border-color: #760813 !important;
+    background-color: #8a0a17 !important;
+    color: #FFF !important;
+}
+.btn-success:focus,
+.btn-success:active {
+    border-color: #59060D !important;
+    background-color: #59060D !important;
+    color: #FFF !important;
+}
+.btn-success ~ .dropdown-menu .dropdown-item.active {
+    background-color: #760813;
+}
+
+/* ---------- Info button (semantic = merah muda #E83347) ---------- */
+
+.btn-info {
+    border-color: #D12738 !important;
+    background-color: #E83347 !important;
+    color: #FFFFFF;
+}
+.btn-info:hover {
+    border-color: #EA4456 !important;
+    background-color: #F05668 !important;
+    color: #FFF !important;
+}
+.btn-info:focus,
+.btn-info:active {
+    border-color: #D12738 !important;
+    background-color: #C82233 !important;
+    color: #FFF !important;
+}
+.btn-info ~ .dropdown-menu .dropdown-item.active {
+    background-color: #E83347;
+}
+.alert-info {
+    border-color: #E83347 !important;
+    background-color: #F77989 !important;
+    color: #FFFFFF !important;
+}
+.alert-info .alert-link {
+    color: #FFFFFF !important;
+}
+.bg-info {
+    background-color: #E83347 !important;
+}
+.bg-info.bg-glow {
+    box-shadow: 0px 1px 20px 1px rgba(232, 51, 71, 0.6);
+}
+.border-info {
+    border-color: #E83347;
+}
+.overlay-info {
+    background: #E83347;
+    background: rgba(232, 51, 71, 0.8);
+}
+.info {
+    color: #E83347 !important;
+}
+
+/* ---------- Warning button (semantic = pink-oranye #F77989) ---------- */
+
+.btn-warning {
+    background-color: #F77989 !important;
+    border-color: #F77989 !important;
+    color: #FFFFFF !important;
+}
+.btn-warning:hover {
+    background-color: #FB9CAA !important;
+    border-color: #FB9CAA !important;
+    color: #FFFFFF !important;
+}
+.btn-warning ~ .dropdown-menu .dropdown-item.active {
+    background-color: #F77989;
+}
+
+/* ---------- Gradient primary button (tombol login bundar) ---------- */
+
+.btn-gradient-primary {
+    background-image: linear-gradient(to right, var(--primary) 0%, var(--primary-active) 51%, var(--primary) 100%) !important;
+    -webkit-box-shadow: 0px 0px 16px 0 rgba(206, 17, 38, 0.5) !important;
+    box-shadow: 0px 0px 16px 0 rgba(206, 17, 38, 0.5) !important;
+}
+.btn-gradient-primary:hover {
+    background-position: right center;
+}
+
+/* ---------- Badge ---------- */
+
+.badge-success {
+    background-color: #760813 !important;
+}
+.badge-success.badge-glow {
+    box-shadow: 0px 0px 10px #760813;
+}
+.badge-success[href]:hover,
+.badge-success[href]:focus {
+    background-color: #59060D !important;
+}
+.badge-info {
+    background-color: #E83347 !important;
+}
+.badge-info.badge-glow {
+    box-shadow: 0px 0px 10px #E83347;
+}
+
+/* ---------- DataTables 2.x loading dots ---------- */
+
+.dataTables_processing,
+div.dt-processing {
+    color: var(--primary) !important;
+}
+div.dt-processing > div:last-child > div {
+    background: var(--primary) !important;
+    background: rgb(206, 17, 38) !important;
+}
+
+/* ---------- Select2 Bootstrap-5 theme overrides ---------- */
+
+.select2-container--bootstrap-5 .select2-dropdown .select2-results__options .select2-results__option.select2-results__option--selected,
+.select2-container--bootstrap-5 .select2-dropdown .select2-results__options .select2-results__option[aria-selected=true]:not(.select2-results__option--highlighted) {
+    background-color: var(--primary) !important;
+}
+.select2-container--bootstrap-5.select2-container--focus .select2-selection,
+.select2-container--bootstrap-5.select2-container--open .select2-selection {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 0.25rem rgba(206, 17, 38, 0.25) !important;
+}
+.select2-container--bootstrap-5 .select2-dropdown {
+    border-color: var(--primary) !important;
+}
+.select2-container--bootstrap-5 .select2-dropdown .select2-search .select2-search__field:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 0.25rem rgba(206, 17, 38, 0.25) !important;
+}
+.select2-container--bootstrap-5 .select2-search--dropdown .select2-search__field {
+    border-color: #ced4da !important;
+}
+
+/* ---------- Select2 default theme highlight (Frest bundled) ---------- */
+
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background-color: var(--primary);
+    color: white;
+}
+
+/* ---------- Form section (was #1a3c8b header) ---------- */
+
+form .form-section {
+    color: #59060D;
+    border-bottom: 1px solid #59060D;
+}
+
+/* ---------- Login/Register gradient panel ---------- */
+
+#account-login .card-account-left {
+    background: linear-gradient(90deg, var(--primary), #760813) !important;
+}
+#account-register .card-account-left {
+    background: linear-gradient(90deg, var(--primary), #760813) !important;
+}
+
+/* ---------- Vertical compact menu header bg ---------- */
+
+.vertical-compact-menu .main-menu .main-menu-content > span.menu-title,
+.vertical-compact-menu .main-menu .main-menu-content a.menu-title {
+    background-color: var(--primary);
+    border-color: var(--primary);
+}

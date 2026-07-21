@@ -26,6 +26,9 @@
     <link rel="stylesheet" type="text/css" href="/assets/css/core/menu/menu-types/vertical-compact-menu.css">
     <link rel="stylesheet" type="text/css" href="/assets/vendors/css/cryptocoins/cryptocoins.css">
     <link rel="stylesheet" type="text/css" href="/assets/css/pages/account-login.css">
+    @if (($appTheme ?? 'default') === 'merah-putih')
+        <link rel="stylesheet" type="text/css" href="/assets/css/theme-merah-putih.css">
+    @endif
     <!-- END Page Level CSS-->
 </head>
 

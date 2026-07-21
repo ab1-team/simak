@@ -55,6 +55,9 @@
     <link rel="stylesheet" type="text/css" href="/assets/vendors/css/cryptocoins/cryptocoins.css">
     <link rel="stylesheet" type="text/css" href="/assets/css/pages/timeline.css">
     <link rel="stylesheet" type="text/css" href="/assets/css/pages/dashboard-ico.css">
+    @if (($appTheme ?? 'default') === 'merah-putih')
+        <link rel="stylesheet" type="text/css" href="/assets/css/theme-merah-putih.css">
+    @endif
 
     <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
     <style>

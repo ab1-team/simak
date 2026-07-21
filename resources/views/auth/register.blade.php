@@ -26,6 +26,9 @@
     <link rel="stylesheet" type="text/css" href="/assets/css/core/menu/menu-types/vertical-compact-menu.css">
     <link rel="stylesheet" type="text/css" href="/assets/vendors/css/cryptocoins/cryptocoins.css">
     <link rel="stylesheet" type="text/css" href="/assets/css/pages/account-login.css">
+    @if (($appTheme ?? 'default') === 'merah-putih')
+        <link rel="stylesheet" type="text/css" href="/assets/css/theme-merah-putih.css">
+    @endif
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
