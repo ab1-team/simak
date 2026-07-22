@@ -394,3 +394,30 @@ form .form-section {
     background-color: #6c757d !important;
     color: #FFFFFF !important;
 }
+
+/* ---------- Topbar dropdown menu (Profile / Invoice / Logout) ---------- */
+
+.dropdown-menu .dropdown-item:hover,
+.dropdown-menu .dropdown-item:focus,
+.dropdown-menu .dropdown-item.active,
+.dropdown-menu .dropdown-item:active {
+    background-color: var(--primary) !important;
+    color: #FFFFFF !important;
+}
+
+/* ---------- Sidebar submenu hover/active (PENGATURAN sub-items) ---------- */
+
+.main-menu .navigation > li > ul li.active > a,
+.main-menu .navigation > li > ul li:hover > a,
+.main-menu .navigation > li > ul li.open > a {
+    background-color: var(--primary) !important;
+    color: #FFFFFF !important;
+}
+.main-menu.menu-dark .navigation > li > ul li.active > a,
+.main-menu.menu-dark .navigation > li > ul li:hover > a {
+    color: #FFFFFF !important;
+}
+.main-menu.menu-light .navigation > li > ul li.active > a,
+.main-menu.menu-light .navigation > li > ul li:hover > a {
+    color: #FFFFFF !important;
+}
