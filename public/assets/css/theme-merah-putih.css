@@ -421,3 +421,17 @@ form .form-section {
 .main-menu.menu-light .navigation > li > ul li:hover > a {
     color: #FFFFFF !important;
 }
+
+/* ---------- Sidebar popout submenu background (Frest components.css:395) ---------- */
+
+.main-menu.menu-dark ul.menu-popout {
+    background: var(--primary) !important;
+}
+.main-menu.menu-dark ul.menu-popout li a {
+    color: #FFFFFF !important;
+}
+.main-menu.menu-dark ul.menu-popout li.active > a,
+.main-menu.menu-dark ul.menu-popout li:hover > a {
+    background: var(--primary-hover) !important;
+    color: #FFFFFF !important;
+}
