@@ -424,14 +424,37 @@ form .form-section {
 
 /* ---------- Sidebar popout submenu background (Frest components.css:395) ---------- */
 
-.main-menu.menu-dark ul.menu-popout {
+.main-menu.menu-dark ul.menu-popout,
+.main-menu ul.menu-popout {
+    background-color: var(--primary) !important;
     background: var(--primary) !important;
 }
-.main-menu.menu-dark ul.menu-popout li a {
+.main-menu.menu-dark ul.menu-popout > li > a,
+.main-menu ul.menu-popout > li > a {
     color: #FFFFFF !important;
 }
-.main-menu.menu-dark ul.menu-popout li.active > a,
-.main-menu.menu-dark ul.menu-popout li:hover > a {
+.main-menu.menu-dark ul.menu-popout > li:hover > a,
+.main-menu.menu-dark ul.menu-popout > li:focus > a,
+.main-menu.menu-dark ul.menu-popout > li.active > a,
+.main-menu ul.menu-popout > li:hover > a,
+.main-menu ul.menu-popout > li:focus > a,
+.main-menu ul.menu-popout > li.active > a {
+    background-color: var(--primary-hover) !important;
     background: var(--primary-hover) !important;
+    color: #FFFFFF !important;
+}
+.main-menu.menu-dark ul.menu-popout > li > ul,
+.main-menu ul.menu-popout > li > ul {
+    background-color: var(--primary-hover) !important;
+    background: var(--primary-hover) !important;
+}
+.main-menu.menu-dark ul.menu-popout .hover > a,
+.main-menu.menu-dark ul.menu-popout:hover > a,
+.main-menu ul.menu-popout .hover > a,
+.main-menu ul.menu-popout:hover > a {
+    color: #FFFFFF !important;
+}
+.main-menu.menu-dark ul.menu-popout .open > a,
+.main-menu ul.menu-popout .open > a {
     color: #FFFFFF !important;
 }
