@@ -458,3 +458,33 @@ form .form-section {
 .main-menu ul.menu-popout .open > a {
     color: #FFFFFF !important;
 }
+
+/* ---------- Vertical-compact-menu popout (actual class is .menu-content) ---------- */
+
+.vertical-compact-menu .main-menu-content > ul.menu-content,
+.vertical-compact-menu .main-menu .main-menu-content > ul.menu-content {
+    background-color: var(--primary) !important;
+    background: var(--primary) !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+.vertical-compact-menu .main-menu-content > ul.menu-content li > a,
+.vertical-compact-menu .main-menu .main-menu-content > ul.menu-content li > a {
+    color: #FFFFFF !important;
+}
+.vertical-compact-menu .main-menu-content > ul.menu-content li:hover > a,
+.vertical-compact-menu .main-menu-content > ul.menu-content li:focus > a,
+.vertical-compact-menu .main-menu-content > ul.menu-content li.active > a,
+.vertical-compact-menu .main-menu-content > ul.menu-content li.open > a,
+.vertical-compact-menu .main-menu .main-menu-content > ul.menu-content li:hover > a,
+.vertical-compact-menu .main-menu .main-menu-content > ul.menu-content li:focus > a,
+.vertical-compact-menu .main-menu .main-menu-content > ul.menu-content li.active > a,
+.vertical-compact-menu .main-menu .main-menu-content > ul.menu-content li.open > a {
+    background-color: var(--primary-hover) !important;
+    background: var(--primary-hover) !important;
+    color: #FFFFFF !important;
+}
+.vertical-compact-menu .main-menu-content > ul.menu-content li > ul,
+.vertical-compact-menu .main-menu .main-menu-content > ul.menu-content li > ul {
+    background-color: var(--primary-hover) !important;
+    background: var(--primary-hover) !important;
+}
