@@ -118,9 +118,10 @@ class InvoiceController extends Controller
     {
         $rekening = AdminRekening::where('kd_rekening', '111.1001')->orwhere('kd_rekening', '121.1001')->orderBy('kd_rekening', 'DESC')->get();
         $jumlah_trx = AdminTransaksi::where('idv', $invoice->idv)->sum('jumlah');
+        $trx_terakhir = AdminTransaksi::where('idv', $invoice->idv)->orderByDesc('idt')->first();
 
         $title = 'Invoice #' . $invoice->nomor . ' - ' . $invoice->usaha->nama_usaha;
-        return view('admin.invoice.detail')->with(compact('title', 'rekening', 'jumlah_trx', 'invoice'));
+        return view('admin.invoice.detail')->with(compact('title', 'rekening', 'jumlah_trx', 'trx_terakhir', 'invoice'));
     }
 
     public function InvoiceNo($tgl = null)

@@ -68,13 +68,35 @@
         </div>
     @endif
 
-    <div class="card">
-        <div class="card-body">
-            <embed src="/pelaporan/invoice/{{ $invoice->idv }}" type="application/pdf" width="100%" height="600px"
-                id="Invoice" />
+    <div class="row">
+        <div class="col-lg-7">
+            <div class="card">
+                <div class="card-body p-2">
+                    <embed src="/pelaporan/invoice/{{ $invoice->idv }}" type="application/pdf" width="100%" height="600px"
+                        id="Invoice" />
 
-            <div class="d-flex justify-content-end" {!! $invoice->status == 'PAID' ? '' : 'style="display: none"' !!} id="BtnKembali">
-                <a href="/db/paid" class="btn btn-sm btn-warning mr-2">Kembali</a>
+                    <div class="d-flex justify-content-end" {!! $invoice->status == 'PAID' ? '' : 'style="display: none"' !!} id="BtnKembali">
+                        <a href="/db/paid" class="btn btn-sm btn-warning mr-2">Kembali</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card">
+                <div class="card-body p-2">
+                    @php
+    $kec = optional(optional($invoice->usaha->d)->kec)->nama_kec ?? '';
+    $nominal_bayar = $trx_terakhir ? $trx_terakhir->jumlah : $invoice->jumlah;
+    $tgl_bayar = $trx_terakhir ? $trx_terakhir->tgl_transaksi : $invoice->tgl_lunas;
+@endphp
+<textarea class="form-control" rows="20" readonly>{{ $invoice->jp->nama_jp }}
+
+*Yth. {{ $invoice->usaha->nama_usaha }}{{ $kec ? ' ' . $kec : '' }}*
+Terima kasih telah melakukan pembayaran *{{ $invoice->jp->nama_jp }}* sebesar *Rp. {{ number_format($nominal_bayar, 2, '.', ',') }}* pada tanggal *{{ date('d/m/Y', strtotime($tgl_bayar)) }}*. Silakan cetak Invoice Paid di menu Pengaturan - Invoice.
+
+Salam,
+PT. Asta Brata Teknologi</textarea>
+                </div>
             </div>
         </div>
     </div>
