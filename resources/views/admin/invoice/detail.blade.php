@@ -83,19 +83,27 @@
         </div>
         <div class="col-lg-5">
             <div class="card">
-                <div class="card-body p-1">
+                <div class="card-body p-3">
+                    <label class="form-label font-weight-bold text-muted small mb-2">Pesan</label>
                     @php
                         $kec = optional(optional($invoice->usaha->d)->kec)->nama_kec ?? '';
                         $nominal_bayar = $trx_terakhir ? $trx_terakhir->jumlah : $invoice->jumlah;
                         $tgl_bayar = $trx_terakhir ? $trx_terakhir->tgl_transaksi : $invoice->tgl_lunas;
                     @endphp
-<textarea class="form-control bg-white border" style="padding:8px 10px;font-size:13px;line-height:1.45;resize:none;min-height:520px" readonly>{{ $invoice->jp->nama_jp }}{{ $kec ? ' Kec. ' . $kec : '' }}
+                    <textarea class="form-control bg-white border"
+                        style="padding:8px 10px; font-size:13px; line-height:1.45; resize:none; height:200px;" readonly>{{ $invoice->jp->nama_jp }}{{ $kec ? ' Kec. ' . $kec : '' }}
 
-*Yth. {{ $invoice->usaha->nama_usaha }}{{ $kec ? ' ' . $kec : '' }}*
-Terima kasih telah melakukan pembayaran *{{ $invoice->jp->nama_jp }} Kec. {{ $kec }}* sebesar *Rp. {{ number_format($nominal_bayar, 2, '.', ',') }}* pada tanggal *{{ date('d/m/Y', strtotime($tgl_bayar)) }}*. Silakan cetak Invoice Paid di menu Pengaturan - Invoice.
+            *Yth. {{ $invoice->usaha->nama_usaha }}{{ $kec ? ' ' . $kec : '' }}*
+            Terima kasih telah melakukan pembayaran *{{ $invoice->jp->nama_jp }} Kec. {{ $kec }}* sebesar *Rp. {{ number_format($nominal_bayar, 2, '.', ',') }}* pada tanggal *{{ date('d/m/Y', strtotime($tgl_bayar)) }}*. Silakan cetak Invoice Paid di menu Pengaturan - Invoice.
 
-Salam,
-PT. Asta Brata Teknologi</textarea>
+            Salam,
+            PT. Asta Brata Teknologi
+                        </textarea>
+
+                    <!-- Jika butuh tombol Kirim Pesan seperti contoh gambar kedua -->
+                    <div class="text-right mt-3">
+                        <button type="button" class="btn btn-primary btn-sm px-3">KIRIM PESAN</button>
+                    </div>
                 </div>
             </div>
         </div>
