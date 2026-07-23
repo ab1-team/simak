@@ -118,7 +118,7 @@
                     <img src="../public/assets/img/abt_logo.png" width="88" alt="">
                 </td>
                 <td>
-                    <div class="title">PT. ASTA BRATA TEKNOLOGI</div>
+                    <div class="title">PT. ASTA BRATA TEKNOLOGII</div>
                     <div class="subtitle">IT Colsulting, System, Training and Digital Audits</div>
                     <div class="desc">
                         SK. Kementerian Hukum dan HAM RI Nomor. AHU-01329.40.10.2014 - NPWP. 66.867.912.9-524.000
