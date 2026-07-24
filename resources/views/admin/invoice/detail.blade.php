@@ -69,7 +69,7 @@
     @endif
 
     <div class="row">
-        <div class="col-lg-7">
+        <div class="col-lg-9">
             <div class="card">
                 <div class="card-body p-2">
                     <embed src="/pelaporan/invoice/{{ $invoice->idv }}" type="application/pdf" width="100%"
@@ -92,11 +92,11 @@
                     <textarea class="form-control bg-white border-0"
                         style="padding:8px 10px; font-size:13px; line-height:1.45; resize:none; height:200px;" readonly>{{ $invoice->jp->nama_jp }}{{ $kec ? ' Kec. ' . $kec : '' }}
 
-            *Yth. {{ $invoice->usaha->nama_usaha }}{{ $kec ? ' ' . $kec : '' }}*
-            Terima kasih telah melakukan pembayaran *{{ $invoice->jp->nama_jp }} Kec. {{ $kec }}* sebesar *Rp. {{ number_format($nominal_bayar, 2, '.', ',') }}* pada tanggal *{{ date('d/m/Y', strtotime($tgl_bayar)) }}*. Silakan cetak Invoice Paid di menu Pengaturan - Invoice.
+        *Yth. {{ $invoice->usaha->nama_usaha }}{{ $kec ? ' ' . $kec : '' }}*
+        Terima kasih telah melakukan pembayaran *{{ $invoice->jp->nama_jp }} Kec. {{ $kec }}* sebesar *Rp. {{ number_format($nominal_bayar, 2, '.', ',') }}* pada tanggal *{{ date('d/m/Y', strtotime($tgl_bayar)) }}*. Silakan cetak Invoice Paid di menu Pengaturan - Invoice.
 
-            Salam,
-            PT. Asta Brata Teknologi</textarea>
+        Salam,
+        PT. Asta Brata Teknologi</textarea>
                 </div>
             </div>
         </div>
