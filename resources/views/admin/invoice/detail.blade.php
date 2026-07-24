@@ -84,15 +84,15 @@
         </div>
 
         <!-- Textarea tetap di col-lg-4 -->
-<div class="col-lg-3">
+<div class="col-lg-4">
     <div class="card">
         <div class="card-body p-1">
             @php
                 $kec = optional(optional($invoice->usaha->d)->kec)->nama_kec ?? '';
                 $nominal_bayar = $trx_terakhir ? $trx_terakhir->jumlah : $invoice->jumlah;
             @endphp
-            <textarea class="form-control bg-white border-0"
-                style="padding:8px 10px; font-size:13px; line-height:1.45; resize:none; height:200px;" readonly>{{ $invoice->jp->nama_jp }}{{ $kec ? ' Kec. ' . $kec : '' }}
+            <textarea class="form-control bg-white border-0 border-bottom rounded-0"
+                style="padding:8px 10px; font-size:13px; line-height:1.45; resize:none; height:200px; border-color: #dee2e6 !important;" readonly>{{ $invoice->jp->nama_jp }}{{ $kec ? ' Kec. ' . $kec : '' }}
 
 *Yth. {{ $invoice->usaha->nama_usaha }}*
 Terima kasih telah melakukan pembayaran *{{ $invoice->jp->nama_jp }} Kec. {{ $kec }}* sebesar *Rp. {{ number_format($nominal_bayar, 2, '.', ',') }}* pada tanggal *{{ date('d/m/Y') }}*. Silakan cetak Invoice Paid di menu Pengaturan - Invoice.
@@ -100,10 +100,10 @@ Terima kasih telah melakukan pembayaran *{{ $invoice->jp->nama_jp }} Kec. {{ $ke
 Salam,
 PT. Asta Brata Teknologi</textarea>
             
-            <div class="text-right mt-3">
-                <button type="button" class="btn btn-primary btn-sm px-3">KIRIM PESAN</button>
+            <div class="text-right mt-2 px-2 pb-1">
+                <button type="button" class="btn btn-primary btn-sm font-weight-bold" style="padding: 4px 12px; font-size: 12px;">KIRIM PESAN</button>
             </div>
-        </div>
+        </div>  
     </div>
 </div>
     </div>
