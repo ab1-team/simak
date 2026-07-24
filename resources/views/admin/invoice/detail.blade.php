@@ -102,7 +102,7 @@ Salam,
 PT. Asta Brata Teknologi</textarea>
 
                     <div class="text-right mt-2 px-2 pb-1">
-                        <button type="button" class="btn btn-primary btn-sm font-weight-bold"
+                        <button type="button" class="btn btn-info btn-sm font-weight-bold"
                             style="padding: 8px 12px; font-size: 12px;">KIRIM PESAN</button>
                     </div>
                 </div>
