@@ -94,7 +94,7 @@ Route::middleware('maintenance')->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'is_aktif']);
     Route::get('/piutang_jasa', [DashboardController::class, 'piutang'])->middleware(['auth', 'is_aktif']);
-    Route::get('/pelaporan/invoice/{invoice}', [PelaporanController::class, 'invoice']);
+    Route::get('/pelaporan/invoice/{invoice}', [PelaporanController::class, 'invoice'])->where('invoice', '.*');
     Route::get('/simpan_saldo', [DashboardController::class, 'simpanSaldo'])->middleware(['auth', 'is_aktif']);
 
     Route::post('/dashboard/jatuh_tempo', [DashboardController::class, 'jatuhTempo'])->middleware(['auth', 'is_aktif']);
@@ -121,7 +121,7 @@ Route::middleware('maintenance')->group(function () {
     Route::post('/pengaturan/whatsapp/{token}', [SopController::class, 'whatsapp'])->middleware(['auth', 'is_aktif']);
 
     Route::get('/pengaturan/invoice', [SopController::class, 'invoice'])->middleware(['auth', 'is_aktif']);
-    Route::get('/pengaturan/{inv}/invoice', [SopController::class, 'detailInvoice'])->middleware(['auth', 'is_aktif']);
+    Route::get('/pengaturan/{inv}/invoice', [SopController::class, 'detailInvoice'])->where('inv', '.*')->middleware(['auth', 'is_aktif']);
 
     Route::post('/pengaturan/sop/simpanttdpelaporan', [SopController::class, 'simpanTtdPelaporan'])->middleware(['auth', 'is_aktif']);
 

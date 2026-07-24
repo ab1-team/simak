@@ -33,4 +33,9 @@ class AdminInvoice extends Model
     {
         return 'idv';
     }
+
+    public function resolveRouteBinding($value, $field = null)
+    {
+        return $this->where('idv', $value)->orWhere('nomor', $value)->firstOrFail();
+    }
 }

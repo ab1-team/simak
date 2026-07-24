@@ -66,7 +66,7 @@
             $('#TbInvoice').on('click', 'tbody tr', function(e) {
                 var data = table.row(this).data();
 
-                window.location.href = '/pengaturan/' + encodeURIComponent(data.idv) + '/invoice'
+                window.location.href = '/pengaturan/' + data.nomor + '/invoice'
             })
         </script>
     @endif
