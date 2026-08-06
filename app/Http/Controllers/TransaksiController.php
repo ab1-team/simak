@@ -1579,6 +1579,9 @@ class TransaksiController extends Controller
 
         $isAccounts = Session::get('jenis_akun') == 7;
 
+        // Sembunyikan akun Laba Rugi Berjalan (SHU Tahun Berjalan) dari dropdown Sumber Dana & Disimpan Ke
+        $excludedKodeAkun = '3.3.03.01';
+
         //Accounts
         if ($isAccounts) {
 
@@ -1592,10 +1595,12 @@ class TransaksiController extends Controller
                             ->where('jenis_mutasi', 'kredit');
                     });
                 })
+                ->where('kode_akun', '!=', $excludedKodeAkun)
                 ->orderBy('kode_akun', 'ASC')
                 ->get();
 
                 $rek2 = Accounts::where('lev1', 1)
+                    ->where('kode_akun', '!=', $excludedKodeAkun)
                     ->orderBy('kode_akun', 'ASC')
                     ->get();
 
@@ -1606,6 +1611,7 @@ class TransaksiController extends Controller
             elseif ($id == 2) {
 
                 $rek1 = Accounts::whereIn('lev1', [1, 2])
+                    ->where('kode_akun', '!=', $excludedKodeAkun)
                     ->orderBy('kode_akun', 'ASC')
                     ->get();
 
@@ -1620,6 +1626,7 @@ class TransaksiController extends Controller
                             ->where('kode_akun', 'like', '1.1.04.%');
                     });
                 })
+                ->where('kode_akun', '!=', $excludedKodeAkun)
                 ->orderBy('kode_akun', 'ASC')
                 ->get();
 
@@ -1629,8 +1636,12 @@ class TransaksiController extends Controller
             // 3. PINDAH SALDO (BEBAS)
             elseif ($id == 3) {
 
-                $rek1 = Accounts::orderBy('kode_akun', 'ASC')->get();
-                $rek2 = Accounts::orderBy('kode_akun', 'ASC')->get();
+                $rek1 = Accounts::where('kode_akun', '!=', $excludedKodeAkun)
+                    ->orderBy('kode_akun', 'ASC')
+                    ->get();
+                $rek2 = Accounts::where('kode_akun', '!=', $excludedKodeAkun)
+                    ->orderBy('kode_akun', 'ASC')
+                    ->get();
 
                 $label2 = 'Disimpan Ke';
             }
@@ -1642,10 +1653,12 @@ class TransaksiController extends Controller
             if ($id == 1) {
 
                 $rek1 = Rekening::whereIn('lev1', [2, 3, 4])
+                    ->where('kode_akun', '!=', $excludedKodeAkun)
                     ->orderBy('kode_akun', 'ASC')
                     ->get();
 
                 $rek2 = Rekening::where('lev1', 1)
+                    ->where('kode_akun', '!=', $excludedKodeAkun)
                     ->orderBy('kode_akun', 'ASC')
                     ->get();
 
@@ -1654,10 +1667,12 @@ class TransaksiController extends Controller
             } elseif ($id == 2) {
 
                 $rek1 = Rekening::whereIn('lev1', [1, 2])
+                    ->where('kode_akun', '!=', $excludedKodeAkun)
                     ->orderBy('kode_akun', 'ASC')
                     ->get();
 
                 $rek2 = Rekening::whereIn('lev1', [2, 3, 5])
+                    ->where('kode_akun', '!=', $excludedKodeAkun)
                     ->orderBy('kode_akun', 'ASC')
                     ->get();
 
@@ -1665,8 +1680,12 @@ class TransaksiController extends Controller
 
             } elseif ($id == 3) {
 
-                $rek1 = Rekening::orderBy('kode_akun', 'ASC')->get();
-                $rek2 = Rekening::orderBy('kode_akun', 'ASC')->get();
+                $rek1 = Rekening::where('kode_akun', '!=', $excludedKodeAkun)
+                    ->orderBy('kode_akun', 'ASC')
+                    ->get();
+                $rek2 = Rekening::where('kode_akun', '!=', $excludedKodeAkun)
+                    ->orderBy('kode_akun', 'ASC')
+                    ->get();
 
                 $label2 = 'Disimpan Ke';
             }
