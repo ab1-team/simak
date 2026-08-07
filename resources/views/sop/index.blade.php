@@ -5,6 +5,16 @@
     $kop_dokumen = '';
     $upload_logo = '';
 
+    // Personalia selalu tersedia untuk semua user (tidak dibatasi tombol)
+    if (
+        $identitas_lembaga == '' &&
+        $pengelola_bumdes == '' &&
+        $kop_dokumen == '' &&
+        $upload_logo == ''
+    ) {
+        $personalia_bumdes = 'active show';
+    }
+
     if (!in_array('personalisasi_sop.identitas_lembaga', Session::get('tombol'))) {
         $identitas_lembaga = '';
     }
@@ -14,13 +24,6 @@
         ($identitas_lembaga == '' && $personalia_bumdes == '' && $kop_dokumen == '' && $upload_logo == '')
     ) {
         $pengelola_bumdes = 'active show';
-    }
-
-    if (
-        in_array('personalisasi_sop.personalia', Session::get('tombol')) &&
-        ($identitas_lembaga == '' && $pengelola_bumdes == '' && $kop_dokumen == '' && $upload_logo == '')
-    ) {
-        $personalia_bumdes = 'active show';
     }
 
     if (
@@ -110,10 +113,8 @@
                     <a class="nav-link {{ $pengelola_bumdes }}" id="pengelola-tab" data-toggle="pill" href="#pengelola"
                         role="tab" aria-controls="pengelola" aria-selected="false">Sebutan Pengelola</a>
                 @endif
-                @if (in_array('personalisasi_sop.personalia', Session::get('tombol')))
-                    <a class="nav-link {{ $personalia_bumdes }}" id="personalia-tab" data-toggle="pill" href="#personalia"
-                        role="tab" aria-controls="personalia" aria-selected="false">Sebutan Personalia</a>
-                @endif
+                <a class="nav-link {{ $personalia_bumdes }}" id="personalia-tab" data-toggle="pill" href="#personalia"
+                    role="tab" aria-controls="personalia" aria-selected="false">Sebutan Personalia</a>
                 <a class="nav-link {{ $kop_dokumen }}" id="kop-tab" data-toggle="pill" href="#kop" role="tab"
                     aria-controls="kop" aria-selected="false">Kop Dokumen</a>
                 @if (in_array('personalisasi_sop.logo', Session::get('tombol')))
