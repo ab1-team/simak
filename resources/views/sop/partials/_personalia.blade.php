@@ -44,7 +44,7 @@
 </div>
 
 <div class="d-flex justify-content-end">
-    <button type="button" id="TambahPersonalia" class="btn btn-sm btn-info mb-0">
+    <button type="button" id="TambahPersonalia" class="btn btn-sm btn-secondary mb-0">
         Tambah Personalia
     </button>
     <button type="button" id="SimpanPengelola" data-target="#FormPersonalia"
