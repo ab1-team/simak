@@ -647,6 +647,8 @@ class PelaporanController extends Controller
             ['lokasi', Session::get('lokasi')],
         ])->first();
 
+        $data['personalia'] = $data['usaha']->personalia ?? collect();
+
         $data['saldo_calk'] = Saldo::where([
             ['kode_akun', $data['kec']->kd_kec],
             ['tahun', $thn],
@@ -2271,6 +2273,8 @@ class PelaporanController extends Controller
             ['jabatan', '65'],
             ['lokasi', Session::get('lokasi')],
         ])->first();
+
+        $data['personalia'] = $data['usaha']->personalia ?? collect();
 
         $data['saldo_calk'] = Saldo::where([
             ['kode_akun', $data['kec']->kd_kec],

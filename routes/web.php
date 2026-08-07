@@ -11,6 +11,7 @@ use App\Http\Controllers\Auth\SsoController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DesaController;
 use App\Http\Controllers\GenerateController;
+use App\Http\Controllers\HealthController;
 use App\Http\Controllers\PelaporanController;
 use App\Http\Controllers\SopController;
 use App\Http\Controllers\TransaksiController;
@@ -29,6 +30,8 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
+
+Route::get('/health', [HealthController::class, 'check']);
 
 Route::middleware('maintenance')->group(function () {
     Route::prefix('db')->group(function () {
@@ -114,6 +117,7 @@ Route::middleware('maintenance')->group(function () {
 
     Route::put('/pengaturan/lembaga/{usaha}', [SopController::class, 'lembaga'])->middleware(['auth', 'is_aktif']);
     Route::put('/pengaturan/pengelola/{usaha}', [SopController::class, 'pengelola'])->middleware(['auth', 'is_aktif']);
+    Route::put('/pengaturan/personalia/{usaha}', [SopController::class, 'personalia'])->middleware(['auth', 'is_aktif']);
     Route::put('/pengaturan/logo/{usaha}', [SopController::class, 'logo'])->middleware(['auth', 'is_aktif']);
     Route::put('/pengaturan/kop_laporan/{usaha}', [SopController::class, 'kopLaporan'])->middleware(['auth', 'is_aktif']);
     Route::get('/pengaturan/local_view/{key}/{val?}', [SopController::class, 'localView'])->middleware(['auth', 'is_aktif']);

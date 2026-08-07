@@ -1,6 +1,7 @@
 @php
     $identitas_lembaga = 'active show';
     $pengelola_bumdes = '';
+    $personalia_bumdes = '';
     $kop_dokumen = '';
     $upload_logo = '';
 
@@ -10,21 +11,28 @@
 
     if (
         in_array('personalisasi_sop.sebutan_pengelola', Session::get('tombol')) &&
-        ($identitas_lembaga == '' && $kop_dokumen == '' && $upload_logo == '')
+        ($identitas_lembaga == '' && $personalia_bumdes == '' && $kop_dokumen == '' && $upload_logo == '')
     ) {
         $pengelola_bumdes = 'active show';
     }
 
     if (
+        in_array('personalisasi_sop.personalia', Session::get('tombol')) &&
+        ($identitas_lembaga == '' && $pengelola_bumdes == '' && $kop_dokumen == '' && $upload_logo == '')
+    ) {
+        $personalia_bumdes = 'active show';
+    }
+
+    if (
         in_array('personalisasi_sop.kop_dokumen', Session::get('tombol')) &&
-        ($identitas_lembaga == '' && $pengelola_bumdes == '' && $upload_logo == '')
+        ($identitas_lembaga == '' && $pengelola_bumdes == '' && $personalia_bumdes == '' && $upload_logo == '')
     ) {
         $kop_dokumen = 'active show';
     }
 
     if (
         in_array('personalisasi_sop.logo', Session::get('tombol')) &&
-        ($identitas_lembaga == '' && $pengelola_bumdes == '' && $kop_dokumen == '')
+        ($identitas_lembaga == '' && $pengelola_bumdes == '' && $personalia_bumdes == '' && $kop_dokumen == '')
     ) {
         $upload_logo = 'active show';
     }
@@ -55,6 +63,17 @@
                         </div>
                         <div class="card-body pt-0">
                             @include('sop.partials._pengelola')
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade {{ $personalia_bumdes }}" id="personalia" role="tabpanel"
+                    aria-labelledby="personalia-tab">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Sebutan Personalia</h5>
+                        </div>
+                        <div class="card-body pt-0">
+                            @include('sop.partials._personalia')
                         </div>
                     </div>
                 </div>
@@ -90,6 +109,10 @@
                 @if (in_array('personalisasi_sop.sebutan_pengelola', Session::get('tombol')))
                     <a class="nav-link {{ $pengelola_bumdes }}" id="pengelola-tab" data-toggle="pill" href="#pengelola"
                         role="tab" aria-controls="pengelola" aria-selected="false">Sebutan Pengelola</a>
+                @endif
+                @if (in_array('personalisasi_sop.personalia', Session::get('tombol')))
+                    <a class="nav-link {{ $personalia_bumdes }}" id="personalia-tab" data-toggle="pill" href="#personalia"
+                        role="tab" aria-controls="personalia" aria-selected="false">Sebutan Personalia</a>
                 @endif
                 <a class="nav-link {{ $kop_dokumen }}" id="kop-tab" data-toggle="pill" href="#kop" role="tab"
                     aria-controls="kop" aria-selected="false">Kop Dokumen</a>

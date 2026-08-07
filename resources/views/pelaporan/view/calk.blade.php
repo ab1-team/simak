@@ -149,6 +149,13 @@
                         </td>
                     </tr>
                 @endif
+                @foreach ($personalia ?? [] as $p)
+                    <tr>
+                        <td style="padding: 0px; 4px;">{{ $p->sebutan }}</td>
+                        <td style="padding: 0px; 4px;">:</td>
+                        <td style="padding: 0px; 4px;">{{ $p->nama }}</td>
+                    </tr>
+                @endforeach
                 {{-- <tr>
                     <td style="padding: 0px; 4px;">Unit Usaha</td>
                     <td style="padding: 0px; 4px;">:</td>

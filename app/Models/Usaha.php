@@ -22,4 +22,9 @@ class Usaha extends Model
     {
         return $this->belongsTo(TandaTanganLaporan::class, 'id', 'lokasi');
     }
+
+    public function personalia()
+    {
+        return $this->hasMany(Personalia::class, 'lokasi', 'id');
+    }
 }

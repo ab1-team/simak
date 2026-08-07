@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AdminInvoice;
 use App\Models\AkunLevel1;
 use App\Models\AkunLevel3;
+use App\Models\Personalia;
 use App\Models\Rekening;
 use App\Models\Saldo;
 use App\Models\TandaTanganLaporan;
@@ -25,7 +26,7 @@ class SopController extends Controller
     {
         $api = env('APP_API', 'https://api-whatsapp.sidbm.net');
 
-        $usaha = Usaha::where('id', Session::get('lokasi'))->with('ttd')->first();
+        $usaha = Usaha::where('id', Session::get('lokasi'))->with('ttd', 'personalia')->first();
         $token = 'SIMAK-'.str_pad($usaha->id, 4, '0', STR_PAD_LEFT);
 
         $title = 'Personalisasi SOP';
@@ -310,6 +311,41 @@ class SopController extends Controller
         return response()->json([
             'success' => true,
             'msg' => 'Sebutan Pengelola Berhasil Diperbarui.',
+        ]);
+    }
+
+    public function personalia(Request $request, Usaha $usaha)
+    {
+        $data = $request->only([
+            'sebutan',
+            'nama',
+        ]);
+
+        $validate = Validator::make($data, [
+            'sebutan' => 'required|array',
+            'nama' => 'required|array',
+        ]);
+
+        if ($validate->fails()) {
+            return response()->json($validate->errors(), Response::HTTP_MOVED_PERMANENTLY);
+        }
+
+        Personalia::where('lokasi', $usaha->id)->delete();
+        foreach ($data['sebutan'] as $key => $sebutan) {
+            if (trim($sebutan) == '' || trim($data['nama'][$key]) == '') {
+                continue;
+            }
+
+            Personalia::create([
+                'lokasi' => $usaha->id,
+                'sebutan' => ucwords(strtolower($sebutan)),
+                'nama' => $data['nama'][$key],
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'msg' => 'Personalia Berhasil Diperbarui.',
         ]);
     }
 
