@@ -96,53 +96,6 @@
                 manajeman dan bisnis {{ $usaha->nama_usaha }} memiliki struktur kepengurusan pusat sebagai berikut :
             </p>
             <table style="margin-top: -10px; margin-left: 15px;">
-                <tr>
-                    <td style="padding: 0px; 4px;" width="100">{{ $usaha->badan_pengawas }}</td>
-                    <td style="padding: 0px; 4px;">:</td>
-                    <td style="padding: 0px; 4px;">
-                        {{ $pengawas ? $pengawas->namadepan . ' ' . $pengawas->namabelakang : '......................................' }}
-                    </td>
-                </tr>
-                @if ($dir_utama)
-                    <tr>
-                        <td style="padding: 0px; 4px;">{{ $dir_utama->j->nama_jabatan }}</td>
-                        <td style="padding: 0px; 4px;">:</td>
-                        <td style="padding: 0px; 4px;">
-                            {{ $dir_utama->namadepan . ' ' . $dir_utama->namabelakang }}
-                        </td>
-                    </tr>
-                @else
-                    <tr>
-                        <td style="padding: 0px; 4px;">{{ $usaha->kepala_lembaga }}</td>
-                        <td style="padding: 0px; 4px;">:</td>
-                        <td style="padding: 0px; 4px;">
-                            {{ $dir ? $dir->namadepan . ' ' . $dir->namabelakang : '......................................' }}
-                        </td>
-                    </tr>
-                @endif
-                <tr>
-                    <td style="padding: 0px; 4px;">{{ $usaha->kabag_administrasi }}</td>
-                    <td style="padding: 0px; 4px;">:</td>
-                    <td style="padding: 0px; 4px;">
-                        {{ $sekr ? $sekr->namadepan . ' ' . $sekr->namabelakang : '......................................' }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding: 0px; 4px;">{{ $usaha->kabag_keuangan }}</td>
-                    <td style="padding: 0px; 4px;">:</td>
-                    <td style="padding: 0px; 4px;">
-                        {{ $bend ? $bend->namadepan . ' ' . $bend->namabelakang : '......................................' }}
-                    </td>
-                </tr>
-                @if ($dir_utama)
-                    <tr>
-                        <td style="padding: 0px; 4px;">{{ $usaha->kepala_lembaga }}</td>
-                        <td style="padding: 0px; 4px;">:</td>
-                        <td style="padding: 0px; 4px;">
-                            {{ $dir ? $dir->namadepan . ' ' . $dir->namabelakang : '......................................' }}
-                        </td>
-                    </tr>
-                @endif
                 @foreach ($personalia ?? [] as $p)
                     <tr>
                         <td style="padding: 0px; 4px;">{{ $p->sebutan }}</td>
