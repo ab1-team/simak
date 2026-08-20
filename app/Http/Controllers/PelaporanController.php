@@ -383,6 +383,11 @@ class PelaporanController extends Controller
 
     private function laba_rugi(array $data)
     {
+        $usaha = $data["usaha"] ?? null;
+        $jenisAkun = $usaha ? (int) $usaha->jenis_akun : (int) Session::get("jenis_akun");
+        if ($jenisAkun === 7) {
+            return $this->labarugiv2($data);
+        }
         $keuangan = new Keuangan;
 
         $thn = $data['tahun'];
@@ -443,9 +448,7 @@ class PelaporanController extends Controller
         $data['awal_tahun'] = $tahun.'-01-01';
         $data['tgl_kondisi'] = "{$tahun}-{$bulan}-{$hari}";
 
-        if ($bulan === 1 && $hari === '01') {
-            return $this->laba_rugi_tutup_buku($data);
-        }
+
         $keuangan = new Keuangan();
         $hasil = $keuangan->laba_rugiv2($tahun, $bulan);
 
@@ -2283,6 +2286,11 @@ class PelaporanController extends Controller
 
     private function laba_rugi_tutup_buku(array $data)
     {
+        $usaha = $data["usaha"] ?? null;
+        $jenisAkun = $usaha ? (int) $usaha->jenis_akun : (int) Session::get("jenis_akun");
+        if ($jenisAkun === 7) {
+            return $this->labarugiv2($data);
+        }
         $keuangan = new Keuangan;
 
         $thn = $data['tahun'];

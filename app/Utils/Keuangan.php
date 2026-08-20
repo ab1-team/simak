@@ -1047,166 +1047,276 @@ class Keuangan
         ];
     }
     
-    public function laba_rugiv2(int $tahun, int $bulan): array
+    public function laba_rugiv2(int $tahun, int $bulan = 0): array
     {
-        $accounts = Accounts::with([
-            'saldo' => fn ($q) => $q->where('tahun', $tahun)->where('bulan', 0),
-            'kom_saldo' => fn ($q) => $q->where('tahun', $tahun)->where('bulan', $bulan)
-        ])->orderBy('kode_akun')->get();
+        $bulanInt = intval($bulan);
+        $lokasi = \Session::get('lokasi');
 
-        $data = [
-            'sections' => [
-                'penjualan' => [],
-                'pembelian' => [],
-                'persediaan' => [],
-                'pendapatan_lain' => [],
-                'beban_operasional' => [],
-                'pendapatan_non_usaha' => [],
-                'beban_non_usaha' => [],
-                'beban_pajak' => [],
+        $accounts = Accounts::where(function ($q) {
+                $q->where('kode_akun', 'LIKE', '4.%')
+                    ->orWhere('kode_akun', 'LIKE', '5.%')
+                    ->orWhere('kode_akun', 'LIKE', '6.%')
+                    ->orWhere('kode_akun', 'LIKE', '7.%')
+                    ->orWhere('kode_akun', 'LIKE', '1.1.03.%');
+            })
+            ->with([
+                'saldo' => fn($q) => $q->where('tahun', $tahun)->where('bulan', 0),
+                'kom_saldo' => fn($q) => $q->where('tahun', $tahun)->where('bulan', '>=', 1)->where('bulan', '<=', $bulanInt)
+            ])
+            ->get()
+            ->keyBy('kode_akun');
+
+        $getS = function ($kode, $bln) use ($accounts, $tahun, $lokasi) {
+            $acc = $accounts->get($kode);
+            if (!$acc) return 0;
+            if ($bln < 0) return 0;
+
+            $debitAwal = (float)($acc->saldo->debit ?? 0);
+            $kreditAwal = (float)($acc->saldo->kredit ?? 0);
+
+            if ($bln == 0) {
+                if ($acc->jenis_mutasi == 'kredit') {
+                    return $kreditAwal - $debitAwal;
+                }
+                return $debitAwal - $kreditAwal;
+            }
+
+            $saldos = \DB::table("saldo_$lokasi")
+                ->where('kode_akun', $kode)
+                ->where('tahun', $tahun)
+                ->where('bulan', '>=', 1)
+                ->where('bulan', '<=', $bln)
+                ->get();
+
+            $debitMutasi = (float)$saldos->sum('debit');
+            $kreditMutasi = (float)$saldos->sum('kredit');
+
+            if ($acc->jenis_mutasi == 'kredit') {
+                return ($kreditAwal - $debitAwal) + ($kreditMutasi - $debitMutasi);
+            }
+            return ($debitAwal - $kreditAwal) + ($debitMutasi - $kreditMutasi);
+        };
+
+        $getV = function ($kode) use ($getS, $bulanInt) {
+            $sd_lalu = $getS($kode, $bulanInt - 1);
+            $sd_ini = $getS($kode, $bulanInt);
+            $ini = $sd_ini - $sd_lalu;
+            return [
+                'lalu' => $sd_lalu,
+                'ini' => $ini,
+                'sd' => $sd_lalu + $ini,
+            ];
+        };
+
+        // --- 1. LABA KOTOR SECTION ---
+        $vPenjualan = $getV('4.1.01.01');
+        $vDiskonPenj = $getV('4.1.01.02');
+        $vReturPenj = $getV('4.1.01.03');
+        $vCashbackPenj = $getV('4.1.01.06');
+
+        $penjualanBersih = [
+            'lalu' => $vPenjualan['lalu'] + $vDiskonPenj['lalu'] + $vReturPenj['lalu'] + $vCashbackPenj['lalu'],
+            'ini' => $vPenjualan['ini'] + $vDiskonPenj['ini'] + $vReturPenj['ini'] + $vCashbackPenj['ini'],
+            'sd' => $vPenjualan['sd'] + $vDiskonPenj['sd'] + $vReturPenj['sd'] + $vCashbackPenj['sd'],
+        ];
+
+        // Hitung pembelian dari mutasi debit akun persediaan
+        $debitPersediaan = function ($bulanEnd) use ($lokasi, $tahun) {
+            if ($bulanEnd <= 0) return 0;
+            return (float) \DB::table("saldo_$lokasi")
+                ->where('kode_akun', 'LIKE', '1.1.03%')
+                ->where('tahun', $tahun)
+                ->where('bulan', '>=', 1)
+                ->where('bulan', '<=', $bulanEnd)
+                ->sum('debit');
+        };
+
+        $pembelianSdLalu = $debitPersediaan($bulanInt - 1);
+        $pembelianSdIni = $debitPersediaan($bulanInt);
+        $pembelianIni = $pembelianSdIni - $pembelianSdLalu;
+
+        $saldoSdBulanLalu = $getS('1.1.03.01', $bulanInt - 1);
+        $saldoSdBulanIni = $getS('1.1.03.01', $bulanInt);
+        $saldoAwal = $getS('1.1.03.01', 0);
+
+        $vPersediaanAwal = [
+            'lalu' => $saldoAwal,
+            'ini' => $saldoSdBulanLalu,
+            'sd' => $saldoAwal,
+        ];
+
+        $vPersediaanAkhir = [
+            'lalu' => $saldoSdBulanLalu,
+            'ini' => $saldoSdBulanIni,
+            'sd' => $saldoSdBulanIni,
+        ];
+
+        $vPembelian = [
+            'lalu' => $pembelianSdLalu,
+            'ini' => $pembelianIni,
+            'sd' => $pembelianSdIni,
+        ];
+
+        $vDiskonPemb = $getV('5.1.01.02');
+        $vReturPemb = $getV('5.1.01.03');
+        $vCashbackPemb = $getV('5.1.01.06');
+
+        $pembelianBersih = [
+            'lalu' => $vPembelian['lalu'] + $vDiskonPemb['lalu'] + $vReturPemb['lalu'] + $vCashbackPemb['lalu'],
+            'ini' => $vPembelian['ini'] + $vDiskonPemb['ini'] + $vReturPemb['ini'] + $vCashbackPemb['ini'],
+            'sd' => $vPembelian['sd'] + $vDiskonPemb['sd'] + $vReturPemb['sd'] + $vCashbackPemb['sd'],
+        ];
+
+        $totalPersediaan = [
+            'lalu' => $vPersediaanAwal['lalu'] + $pembelianBersih['lalu'],
+            'ini' => $vPersediaanAwal['ini'] + $pembelianBersih['ini'],
+            'sd' => $vPersediaanAwal['sd'] + $pembelianBersih['sd'],
+        ];
+
+        $hpp = [
+            'lalu' => $totalPersediaan['lalu'] - $vPersediaanAkhir['lalu'],
+            'ini' => $totalPersediaan['ini'] - $vPersediaanAkhir['ini'],
+            'sd' => $totalPersediaan['sd'] - $vPersediaanAkhir['sd'],
+        ];
+
+        $group1_kode = [
+            ['kode' => '4.1.01.01', 'nama' => 'Penjualan', 'saldo_sd_lalu' => $vPenjualan['lalu'], 'saldo_bulan_ini' => $vPenjualan['ini'], 'saldo_sd_ini' => $vPenjualan['sd']],
+            ['kode' => '4.1.01.02', 'nama' => 'Diskon Penjualan', 'saldo_sd_lalu' => $vDiskonPenj['lalu'], 'saldo_bulan_ini' => $vDiskonPenj['ini'], 'saldo_sd_ini' => $vDiskonPenj['sd']],
+            ['kode' => '4.1.01.03', 'nama' => 'Retur Penjualan', 'saldo_sd_lalu' => $vReturPenj['lalu'], 'saldo_bulan_ini' => $vReturPenj['ini'], 'saldo_sd_ini' => $vReturPenj['sd']],
+            ['kode' => '4.1.01.06', 'nama' => 'Cashback Penjualan', 'saldo_sd_lalu' => $vCashbackPenj['lalu'], 'saldo_bulan_ini' => $vCashbackPenj['ini'], 'saldo_sd_ini' => $vCashbackPenj['sd']],
+            ['kode' => '', 'nama' => 'Penjualan Bersih', 'saldo_sd_lalu' => $penjualanBersih['lalu'], 'saldo_bulan_ini' => $penjualanBersih['ini'], 'saldo_sd_ini' => $penjualanBersih['sd'], 'is_bold' => true],
+        ];
+
+        $group2_kode = [
+            ['kode' => '', 'nama' => 'Persediaan Awal', 'saldo_sd_lalu' => $vPersediaanAwal['lalu'], 'saldo_bulan_ini' => $vPersediaanAwal['ini'], 'saldo_sd_ini' => $vPersediaanAwal['sd']],
+            ['kode' => '1.1.03.01', 'nama' => 'Pembelian', 'saldo_sd_lalu' => $vPembelian['lalu'], 'saldo_bulan_ini' => $vPembelian['ini'], 'saldo_sd_ini' => $vPembelian['sd']],
+            ['kode' => '5.1.01.02', 'nama' => 'Diskon Pembelian', 'saldo_sd_lalu' => $vDiskonPemb['lalu'], 'saldo_bulan_ini' => $vDiskonPemb['ini'], 'saldo_sd_ini' => $vDiskonPemb['sd']],
+            ['kode' => '5.1.01.03', 'nama' => 'Retur Pembelian', 'saldo_sd_lalu' => $vReturPemb['lalu'], 'saldo_bulan_ini' => $vReturPemb['ini'], 'saldo_sd_ini' => $vReturPemb['sd']],
+            ['kode' => '5.1.01.06', 'nama' => 'Cashback Pembelian', 'saldo_sd_lalu' => $vCashbackPemb['lalu'], 'saldo_bulan_ini' => $vCashbackPemb['ini'], 'saldo_sd_ini' => $vCashbackPemb['sd']],
+            ['kode' => '', 'nama' => 'Total Pembelian', 'saldo_sd_lalu' => $pembelianBersih['lalu'], 'saldo_bulan_ini' => $pembelianBersih['ini'], 'saldo_sd_ini' => $pembelianBersih['sd'], 'is_bold' => true],
+            ['kode' => '', 'nama' => 'Total Persediaan', 'saldo_sd_lalu' => $totalPersediaan['lalu'], 'saldo_bulan_ini' => $totalPersediaan['ini'], 'saldo_sd_ini' => $totalPersediaan['sd'], 'is_bold' => true],
+            ['kode' => '', 'nama' => 'Persediaan Akhir', 'saldo_sd_lalu' => $vPersediaanAkhir['lalu'], 'saldo_bulan_ini' => $vPersediaanAkhir['ini'], 'saldo_sd_ini' => $vPersediaanAkhir['sd']],
+            ['kode' => '', 'nama' => 'Harga Pokok Penjualan', 'saldo_sd_lalu' => $hpp['lalu'], 'saldo_bulan_ini' => $hpp['ini'], 'saldo_sd_ini' => $hpp['sd'], 'is_bold' => true],
+        ];
+
+        $group = [
+            '1' => [
+                'nama' => 'Pendapatan',
+                'saldo_sd_lalu' => $penjualanBersih['lalu'],
+                'saldo_bulan_ini' => $penjualanBersih['ini'],
+                'saldo_sd_ini' => $penjualanBersih['sd'],
+                'kode' => $group1_kode,
             ],
-            'persediaan_awal' => 0,
-            'persediaan_akhir' => 0,
-            'pembelian_persediaan' => 0,
+            '2' => [
+                'nama' => 'Beban',
+                'saldo_sd_lalu' => $hpp['lalu'],
+                'saldo_bulan_ini' => $hpp['ini'],
+                'saldo_sd_ini' => $hpp['sd'],
+                'kode' => $group2_kode,
+            ],
+            '3' => [
+                'nama' => 'Beban',
+                'saldo_sd_lalu' => 0,
+                'saldo_bulan_ini' => 0,
+                'saldo_sd_ini' => 0,
+                'kode' => [],
+            ],
+            '4' => [
+                'nama' => 'Pajak',
+                'saldo_sd_lalu' => 0,
+                'saldo_bulan_ini' => 0,
+                'saldo_sd_ini' => 0,
+                'kode' => [],
+            ],
         ];
 
-        $penjualan_defaults = [
-            '4.1.01.01' => ['nama' => 'Penjualan', 'saldo' => 0],
-            '4.1.01.02' => ['nama' => 'Diskon Penjualan', 'saldo' => 0],
-            '4.1.01.03' => ['nama' => 'Retur Penjualan', 'saldo' => 0],
-            '4.1.01.06' => ['nama' => 'Cashback Penjualan', 'saldo' => 0],
+        // --- 2. OTHER SECTIONS ---
+        foreach ($accounts as $account) {
+            $kode = $account->kode_akun;
+            $parts = explode('.', $kode);
+            $kode1 = $parts[0] ?? '';
+            $kode2 = $parts[1] ?? '';
+            
+            if ($kode == '4.1.01.01' || $kode == '4.1.01.02' || $kode == '4.1.01.03' || $kode == '4.1.01.06' ||
+                $kode == '5.1.01.01' || $kode == '5.1.01.02' || $kode == '5.1.01.03' || $kode == '5.1.01.04' ||
+                $kode == '5.1.01.05' || $kode == '5.1.01.06' || str_starts_with($kode, '1.1.03')) {
+                continue;
+            }
+
+            $vals = $getV($kode);
+            $saldoData = [
+                'kode' => $kode,
+                'nama' => $account->nama_akun,
+                'saldo_sd_lalu' => $vals['lalu'],
+                'saldo_bulan_ini' => $vals['ini'],
+                'saldo_sd_ini' => $vals['sd'],
+            ];
+
+            if ($kode1 == '7' && $kode2 == '4') { // Tax
+                 $group['4']['kode'][] = $saldoData;
+                 $group['4']['saldo_sd_lalu'] -= $vals['lalu'];
+                 $group['4']['saldo_bulan_ini'] -= $vals['ini'];
+                 $group['4']['saldo_sd_ini'] -= $vals['sd'];
+            } elseif ($kode1 == '4' || ($kode1 == '7' && $account->jenis_mutasi == 'kredit')) { // Income
+                 $group['1']['kode'][] = $saldoData;
+                 $group['1']['saldo_sd_lalu'] += $vals['lalu'];
+                 $group['1']['saldo_bulan_ini'] += $vals['ini'];
+                 $group['1']['saldo_sd_ini'] += $vals['sd'];
+            } elseif (in_array($kode1, ['5', '6', '7'])) { // Expenses
+                 $group['3']['kode'][] = $saldoData;
+                 $group['3']['saldo_sd_lalu'] -= $vals['lalu'];
+                 $group['3']['saldo_bulan_ini'] -= $vals['ini'];
+                 $group['3']['saldo_sd_ini'] -= $vals['sd'];
+            }
+        }
+
+        // Calculate Totals and Labas
+        $resGroup = [];
+        
+        // Pendapatan
+        $resGroup[0] = $group['1'];
+        $resGroup[0]['jumlah_sd_lalu'] = $group['1']['saldo_sd_lalu'];
+        $resGroup[0]['jumlah_bulan_ini'] = $group['1']['saldo_bulan_ini'];
+        $resGroup[0]['jumlah_sd_ini'] = $group['1']['saldo_sd_ini'];
+        $resGroup[0]['total_sd_lalu'] = $group['1']['saldo_sd_lalu'];
+        $resGroup[0]['total_bulan_ini'] = $group['1']['saldo_bulan_ini'];
+        $resGroup[0]['total_sd_ini'] = $group['1']['saldo_sd_ini'];
+
+        // Beban (HPP) -> LABA KOTOR
+        $resGroup[1] = $group['2'];
+        $resGroup[1]['jumlah_sd_lalu'] = $group['2']['saldo_sd_lalu'];
+        $resGroup[1]['jumlah_bulan_ini'] = $group['2']['saldo_bulan_ini'];
+        $resGroup[1]['jumlah_sd_ini'] = $group['2']['saldo_sd_ini'];
+        $resGroup[1]['total_sd_lalu'] = $resGroup[0]['total_sd_lalu'] - $group['2']['saldo_sd_lalu'];
+        $resGroup[1]['total_bulan_ini'] = $resGroup[0]['total_bulan_ini'] - $group['2']['saldo_bulan_ini'];
+        $resGroup[1]['total_sd_ini'] = $resGroup[0]['total_sd_ini'] - $group['2']['saldo_sd_ini'];
+
+        // Beban Lainnya -> LABA SEBELUM PAJAK
+        $resGroup[2] = $group['3'];
+        $resGroup[2]['jumlah_sd_lalu'] = $group['3']['saldo_sd_lalu'];
+        $resGroup[2]['jumlah_bulan_ini'] = $group['3']['saldo_bulan_ini'];
+        $resGroup[2]['jumlah_sd_ini'] = $group['3']['saldo_sd_ini'];
+        $resGroup[2]['total_sd_lalu'] = $resGroup[1]['total_sd_lalu'] + $group['3']['saldo_sd_lalu'];
+        $resGroup[2]['total_bulan_ini'] = $resGroup[1]['total_bulan_ini'] + $group['3']['saldo_bulan_ini'];
+        $resGroup[2]['total_sd_ini'] = $resGroup[1]['total_sd_ini'] + $group['3']['saldo_sd_ini'];
+
+        // Pajak -> LABA BERSIH
+        $resGroup[3] = $group['4'];
+        $resGroup[3]['jumlah_sd_lalu'] = $group['4']['saldo_sd_lalu'];
+        $resGroup[3]['jumlah_bulan_ini'] = $group['4']['saldo_bulan_ini'];
+        $resGroup[3]['jumlah_sd_ini'] = $group['4']['saldo_sd_ini'];
+        $resGroup[3]['total_sd_lalu'] = $resGroup[2]['total_sd_lalu'] + $group['4']['saldo_sd_lalu'];
+        $resGroup[3]['total_bulan_ini'] = $resGroup[2]['total_bulan_ini'] + $group['4']['saldo_bulan_ini'];
+        $resGroup[3]['total_sd_ini'] = $resGroup[2]['total_sd_ini'] + $group['4']['saldo_sd_ini'];
+
+        return [
+            'labaRugi' => $resGroup,
+            'groups' => $resGroup,
+            'laba_bersih' => $resGroup[3]['total_sd_ini'],
+            'metrics' => [
+                'margin_kotor' => $penjualanBersih['sd'] > 0 ? ($resGroup[1]['total_sd_ini'] / $penjualanBersih['sd']) * 100 : 0,
+                'margin_bersih' => $penjualanBersih['sd'] > 0 ? ($resGroup[3]['total_sd_ini'] / $penjualanBersih['sd']) * 100 : 0,
+            ],
         ];
-
-        $pembelian_defaults = [
-            '5.1.01.01' => ['nama' => 'Beban Pokok Penjualan', 'saldo' => 0],
-            '5.1.01.02' => ['nama' => 'Diskon Pembelian', 'saldo' => 0],
-            '5.1.01.03' => ['nama' => 'Retur Pembelian', 'saldo' => 0],
-            '5.1.01.04' => ['nama' => 'Beban Produksi', 'saldo' => 0],
-            '5.1.01.05' => ['nama' => 'Beban Transport Produk', 'saldo' => 0],
-            '5.1.01.06' => ['nama' => 'Cashback Pembelian', 'saldo' => 0],
-        ];
-
-        $kredit_persediaan_mutasi = 0;
-
-        foreach ($accounts as $acc) {
-            $debit_awal   = (float) ($acc->saldo->debit ?? 0);
-            $kredit_awal  = (float) ($acc->saldo->kredit ?? 0);
-            $debit_mutasi   = (float) $acc->kom_saldo->sum('debit');
-            $kredit_mutasi = (float) $acc->kom_saldo->sum('kredit');
-
-            if (str_starts_with($acc->kode_akun, '4') || str_starts_with($acc->kode_akun, '7.1') || str_starts_with($acc->kode_akun, '7.2')) {
-                $saldo = ($kredit_awal - $debit_awal) + ($kredit_mutasi - $debit_mutasi);
-            } else {
-                $saldo = ($debit_awal - $kredit_awal) + ($debit_mutasi - $kredit_mutasi);
-            }
-
-            $row = ['kode_akun' => $acc->kode_akun, 'nama' => $acc->nama_akun, 'saldo' => $saldo];
-
-            // 1. PERSEDIAAN (1.1.03.xx)
-            if (str_starts_with($acc->kode_akun, '1.1.03')) {
-                $saldo_awal  = $debit_awal - $kredit_awal;
-                $saldo_akhir = $saldo_awal + ($debit_mutasi - $kredit_mutasi);
-
-                $data['persediaan_awal']      += $saldo_awal;
-                $data['persediaan_akhir']     += $saldo_akhir;
-                $data['pembelian_persediaan'] += $debit_mutasi;
-                $kredit_persediaan_mutasi    += $kredit_mutasi;
-
-                $data['sections']['persediaan'][] = $row;
-                continue;
-            }
-
-            // 2. PENJUALAN (4.1.01.01, 4.1.01.02, 4.1.01.03, 4.1.01.06)
-            if (isset($penjualan_defaults[$acc->kode_akun])) {
-                $penjualan_defaults[$acc->kode_akun]['saldo'] = $saldo;
-                $penjualan_defaults[$acc->kode_akun]['nama'] = $acc->nama_akun;
-                continue;
-            }
-
-            // 3. PEMBELIAN & HPP (5.1.01.01 .. 5.1.01.06)
-            if (isset($pembelian_defaults[$acc->kode_akun])) {
-                $pembelian_defaults[$acc->kode_akun]['saldo'] = $saldo;
-                $pembelian_defaults[$acc->kode_akun]['nama'] = $acc->nama_akun;
-                continue;
-            }
-
-            // 4. SECTIONS LAIN
-            if (str_starts_with($acc->kode_akun, '4.')) {
-                $data['sections']['pendapatan_lain'][] = $row;
-                continue;
-            }
-            if (str_starts_with($acc->kode_akun, '5.') || str_starts_with($acc->kode_akun, '6.')) {
-                $data['sections']['beban_operasional'][] = $row;
-                continue;
-            }
-            if (str_starts_with($acc->kode_akun, '7.1') || str_starts_with($acc->kode_akun, '7.2')) {
-                $data['sections']['pendapatan_non_usaha'][] = $row;
-                continue;
-            }
-            if (str_starts_with($acc->kode_akun, '7.3')) {
-                $data['sections']['beban_non_usaha'][] = $row;
-                continue;
-            }
-            if (str_starts_with($acc->kode_akun, '7.4')) {
-                $data['sections']['beban_pajak'][] = $row;
-                continue;
-            }
-        }
-
-        foreach ($penjualan_defaults as $kd => $item) {
-            $data['sections']['penjualan'][] = ['kode_akun' => $kd, 'nama' => $item['nama'], 'saldo' => $item['saldo']];
-        }
-        foreach ($pembelian_defaults as $kd => $item) {
-            $data['sections']['pembelian'][] = ['kode_akun' => $kd, 'nama' => $item['nama'], 'saldo' => $item['saldo']];
-        }
-
-        // Perhitungan Penjualan Bersih
-        $vPenjualan = $penjualan_defaults['4.1.01.01']['saldo'];
-        $vDiskonPenj = $penjualan_defaults['4.1.01.02']['saldo'];
-        $vReturPenj = $penjualan_defaults['4.1.01.03']['saldo'];
-        $vCashbackPenj = $penjualan_defaults['4.1.01.06']['saldo'];
-        $data['penjualan_bersih'] = $vPenjualan - abs($vDiskonPenj) - abs($vReturPenj) - abs($vCashbackPenj);
-
-        // Perhitungan Pembelian Bersih
-        $data['diskon_pembelian'] = $pembelian_defaults['5.1.01.02']['saldo'];
-        $data['retur_pembelian'] = $pembelian_defaults['5.1.01.03']['saldo'];
-        $data['beban_produksi'] = $pembelian_defaults['5.1.01.04']['saldo'];
-        $data['beban_transport'] = $pembelian_defaults['5.1.01.05']['saldo'];
-        $data['cashback_pembelian'] = $pembelian_defaults['5.1.01.06']['saldo'];
-
-        $data['total_pembelian'] = $data['pembelian_persediaan']
-            - abs($data['diskon_pembelian'])
-            - abs($data['retur_pembelian'])
-            + abs($data['beban_produksi'])
-            + abs($data['beban_transport'])
-            - abs($data['cashback_pembelian']);
-
-        $data['total_persediaan'] = $data['persediaan_awal'] + $data['total_pembelian'];
-
-        // HPP & Persediaan Akhir
-        $vHppAkun = $pembelian_defaults['5.1.01.01']['saldo'];
-        if ($vHppAkun > 0) {
-            $data['hpp'] = $vHppAkun;
-            $data['persediaan_akhir'] = $data['total_persediaan'] - $data['hpp'];
-        } elseif ($kredit_persediaan_mutasi > 0) {
-            $data['hpp'] = $kredit_persediaan_mutasi;
-            $data['persediaan_akhir'] = $data['total_persediaan'] - $data['hpp'];
-        } else {
-            $data['persediaan_akhir'] = $data['persediaan_akhir'];
-            $data['hpp'] = $data['total_persediaan'] - $data['persediaan_akhir'];
-        }
-
-        $data['laba_kotor'] = $data['penjualan_bersih'] - $data['hpp'];
-
-        $data['total_pendapatan_lain'] = (float) collect($data['sections']['pendapatan_lain'])->sum('saldo');
-        $data['total_beban_operasional'] = (float) collect($data['sections']['beban_operasional'])->sum('saldo');
-        $data['total_pendapatan_non_usaha'] = (float) collect($data['sections']['pendapatan_non_usaha'])->sum('saldo');
-        $data['total_beban_non_usaha'] = (float) collect($data['sections']['beban_non_usaha'])->sum('saldo');
-        $data['total_beban_pajak'] = (float) collect($data['sections']['beban_pajak'])->sum('saldo');
-
-        $data['laba_sebelum_pajak'] = $data['laba_kotor'] + $data['total_pendapatan_lain'] - $data['total_beban_operasional'] + $data['total_pendapatan_non_usaha'] - $data['total_beban_non_usaha'];
-        $data['laba_bersih'] = $data['laba_sebelum_pajak'] - $data['total_beban_pajak'];
-
-        return $data;
     }
 }
