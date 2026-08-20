@@ -114,7 +114,18 @@
                                                     </div>
                                                 </div>
                                                 <div class="col-md-4">
-                                                    <div class="form-group">
+                                                    <div class="form-group" id="wrapper_jenis_akun">
+                                                        <label for="jenis_akun">Jenis Akun</label>
+                                                        <select class="form-control select2" name="jenis_akun"
+                                                            id="jenis_akun">
+                                                            <option value="">-- Pilih Jenis Akun --</option>
+                                                            <option value="5">Bumdes Biasa (Rekening)</option>
+                                                            <option value="7">Perdagangan</option>
+                                                            <option value="8">Koperasi</option>
+                                                        </select>
+                                                        <small class="text-danger" id="msg_jenis_akun"></small>
+                                                    </div>
+                                                    <div class="form-group" id="wrapper_nama_usaha" style="display:none;">
                                                         <label for="nama_usaha">Nama Usaha</label>
                                                         <input autocomplete="off" type="text" name="nama_usaha"
                                                             id="nama_usaha" class="form-control form-control-sm">
@@ -227,6 +238,12 @@
                     setSelectValue('desa', result.data)
                 }
             })
+        })
+
+        $(document).on('change', '#jenis_akun', function() {
+            $('#wrapper_jenis_akun').hide()
+            $('#wrapper_nama_usaha').show()
+            $('#nama_usaha').focus()
         })
 
         function setSelectValue(id, data) {

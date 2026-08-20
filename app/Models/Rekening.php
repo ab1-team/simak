@@ -20,7 +20,8 @@ class Rekening extends Model
         parent::__construct($attributes);
 
         if (Session::get('jenis_akun') == 7) {
-            $this->table = 'accounts';
+            $lokasi = Session::get('lokasi');
+            $this->table = 'accounts' . ($lokasi ? '_' . $lokasi : '');
         } else {
             $this->table = 'rekening_' . Session::get('lokasi');
         }

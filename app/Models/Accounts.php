@@ -9,7 +9,20 @@ use Session;
 class Accounts extends Model
 {
     use HasFactory;
-    protected $table = 'accounts';
+
+    protected $table;
+
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+
+        if (Session::has('jenis_akun') && Session::get('jenis_akun') == 7) {
+            $lokasi = Session::get('lokasi');
+            $this->table = 'accounts' . ($lokasi ? '_' . $lokasi : '');
+        } else {
+            $this->table = 'accounts';
+        }
+    }
    
     public function trx_debit()
     {
