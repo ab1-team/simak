@@ -1,4 +1,4 @@
-extends('pelaporan.layout.base')
+@extends('pelaporan.layout.base')
 <title>{{ $title }}</title>
 @section('content')
     <style>
