@@ -433,6 +433,11 @@ class Keuangan
         $tahun = $array_tgl[0];
         $bulan = $array_tgl[1];
         $hari = $array_tgl[2];
+
+        if (\Session::has('jenis_akun') && \Session::get('jenis_akun') == 7) {
+            $lr = $this->laba_rugiv2((int) $tahun, (int) $bulan);
+            return $lr['laba_bersih'];
+        }
         $surplus = Rekening::where([
             ['lev1', '>=', '4']
         ])->with([
@@ -1051,19 +1056,43 @@ class Keuangan
 
         $data = [
             'sections' => [
-                'penjualan' => [], 'pembelian' => [], 'persediaan' => [],
-                'pendapatan_lain' => [], 'beban_operasional' => [],
-                'pendapatan_non_usaha' => [], 'beban_non_usaha' => [], 'beban_pajak' => [],
+                'penjualan' => [],
+                'pembelian' => [],
+                'persediaan' => [],
+                'pendapatan_lain' => [],
+                'beban_operasional' => [],
+                'pendapatan_non_usaha' => [],
+                'beban_non_usaha' => [],
+                'beban_pajak' => [],
             ],
-            'persediaan_awal' => 0, 'persediaan_akhir' => 0,
-            'pembelian_persediaan' => 0, 'potongan_pembelian' => 0,
+            'persediaan_awal' => 0,
+            'persediaan_akhir' => 0,
+            'pembelian_persediaan' => 0,
         ];
 
+        $penjualan_defaults = [
+            '4.1.01.01' => ['nama' => 'Penjualan', 'saldo' => 0],
+            '4.1.01.02' => ['nama' => 'Diskon Penjualan', 'saldo' => 0],
+            '4.1.01.03' => ['nama' => 'Retur Penjualan', 'saldo' => 0],
+            '4.1.01.06' => ['nama' => 'Cashback Penjualan', 'saldo' => 0],
+        ];
+
+        $pembelian_defaults = [
+            '5.1.01.01' => ['nama' => 'Beban Pokok Penjualan', 'saldo' => 0],
+            '5.1.01.02' => ['nama' => 'Diskon Pembelian', 'saldo' => 0],
+            '5.1.01.03' => ['nama' => 'Retur Pembelian', 'saldo' => 0],
+            '5.1.01.04' => ['nama' => 'Beban Produksi', 'saldo' => 0],
+            '5.1.01.05' => ['nama' => 'Beban Transport Produk', 'saldo' => 0],
+            '5.1.01.06' => ['nama' => 'Cashback Pembelian', 'saldo' => 0],
+        ];
+
+        $kredit_persediaan_mutasi = 0;
+
         foreach ($accounts as $acc) {
-            $debit_awal   = $acc->saldo->debit  ?? 0;
-            $kredit_awal  = $acc->saldo->kredit ?? 0;
-            $debit_mutasi   = $acc->kom_saldo->sum('debit');
-            $kredit_mutasi = $acc->kom_saldo->sum('kredit');
+            $debit_awal   = (float) ($acc->saldo->debit ?? 0);
+            $kredit_awal  = (float) ($acc->saldo->kredit ?? 0);
+            $debit_mutasi   = (float) $acc->kom_saldo->sum('debit');
+            $kredit_mutasi = (float) $acc->kom_saldo->sum('kredit');
 
             if (str_starts_with($acc->kode_akun, '4') || str_starts_with($acc->kode_akun, '7.1') || str_starts_with($acc->kode_akun, '7.2')) {
                 $saldo = ($kredit_awal - $debit_awal) + ($kredit_mutasi - $debit_mutasi);
@@ -1073,41 +1102,111 @@ class Keuangan
 
             $row = ['kode_akun' => $acc->kode_akun, 'nama' => $acc->nama_akun, 'saldo' => $saldo];
 
-            // 1. PERSEDIAAN (F & K) - HANYA INI YANG DIHITUNG SEBAGAI PEMBELIAN
+            // 1. PERSEDIAAN (1.1.03.xx)
             if (str_starts_with($acc->kode_akun, '1.1.03')) {
                 $saldo_awal  = $debit_awal - $kredit_awal;
                 $saldo_akhir = $saldo_awal + ($debit_mutasi - $kredit_mutasi);
 
-                $data['persediaan_awal']  += $saldo_awal;
-                $data['persediaan_akhir'] += $saldo_akhir;
-                
-                // G = Hanya dari akun ini
+                $data['persediaan_awal']      += $saldo_awal;
+                $data['persediaan_akhir']     += $saldo_akhir;
                 $data['pembelian_persediaan'] += $debit_mutasi;
+                $kredit_persediaan_mutasi    += $kredit_mutasi;
 
                 $data['sections']['persediaan'][] = $row;
                 continue;
             }
 
-            // 2. PENJUALAN
-            if (in_array($acc->kode_akun, ['4.1.01.01', '4.1.01.02', '4.1.01.03', '4.1.01.06'])) {
-                $data['sections']['penjualan'][] = $row;
+            // 2. PENJUALAN (4.1.01.01, 4.1.01.02, 4.1.01.03, 4.1.01.06)
+            if (isset($penjualan_defaults[$acc->kode_akun])) {
+                $penjualan_defaults[$acc->kode_akun]['saldo'] = $saldo;
+                $penjualan_defaults[$acc->kode_akun]['nama'] = $acc->nama_akun;
                 continue;
             }
 
-            // 3. PEMBELIAN (5.1.01.xx) - KITA ABAIKAN DARI PEMBELIAN G
-            if (str_starts_with($acc->kode_akun, '5.1.01')) {
-                $data['sections']['pembelian'][] = $row;
+            // 3. PEMBELIAN & HPP (5.1.01.01 .. 5.1.01.06)
+            if (isset($pembelian_defaults[$acc->kode_akun])) {
+                $pembelian_defaults[$acc->kode_akun]['saldo'] = $saldo;
+                $pembelian_defaults[$acc->kode_akun]['nama'] = $acc->nama_akun;
                 continue;
             }
 
-            // 4. BEBAN & LAINNYA
-            if (str_starts_with($acc->kode_akun, '6.')) { $data['sections']['beban_operasional'][] = $row; continue; }
-            if (str_starts_with($acc->kode_akun, '7.1') || str_starts_with($acc->kode_akun, '7.2')) { $data['sections']['pendapatan_non_usaha'][] = $row; continue; }
-            if (str_starts_with($acc->kode_akun, '7.3')) { $data['sections']['beban_non_usaha'][] = $row; continue; }
-            if (str_starts_with($acc->kode_akun, '7.4')) { $data['sections']['beban_pajak'][] = $row; continue; }
+            // 4. SECTIONS LAIN
+            if (str_starts_with($acc->kode_akun, '4.')) {
+                $data['sections']['pendapatan_lain'][] = $row;
+                continue;
+            }
+            if (str_starts_with($acc->kode_akun, '5.') || str_starts_with($acc->kode_akun, '6.')) {
+                $data['sections']['beban_operasional'][] = $row;
+                continue;
+            }
+            if (str_starts_with($acc->kode_akun, '7.1') || str_starts_with($acc->kode_akun, '7.2')) {
+                $data['sections']['pendapatan_non_usaha'][] = $row;
+                continue;
+            }
+            if (str_starts_with($acc->kode_akun, '7.3')) {
+                $data['sections']['beban_non_usaha'][] = $row;
+                continue;
+            }
+            if (str_starts_with($acc->kode_akun, '7.4')) {
+                $data['sections']['beban_pajak'][] = $row;
+                continue;
+            }
         }
 
-        $data['total_pembelian'] = $data['pembelian_persediaan']; 
+        foreach ($penjualan_defaults as $kd => $item) {
+            $data['sections']['penjualan'][] = ['kode_akun' => $kd, 'nama' => $item['nama'], 'saldo' => $item['saldo']];
+        }
+        foreach ($pembelian_defaults as $kd => $item) {
+            $data['sections']['pembelian'][] = ['kode_akun' => $kd, 'nama' => $item['nama'], 'saldo' => $item['saldo']];
+        }
+
+        // Perhitungan Penjualan Bersih
+        $vPenjualan = $penjualan_defaults['4.1.01.01']['saldo'];
+        $vDiskonPenj = $penjualan_defaults['4.1.01.02']['saldo'];
+        $vReturPenj = $penjualan_defaults['4.1.01.03']['saldo'];
+        $vCashbackPenj = $penjualan_defaults['4.1.01.06']['saldo'];
+        $data['penjualan_bersih'] = $vPenjualan - abs($vDiskonPenj) - abs($vReturPenj) - abs($vCashbackPenj);
+
+        // Perhitungan Pembelian Bersih
+        $data['diskon_pembelian'] = $pembelian_defaults['5.1.01.02']['saldo'];
+        $data['retur_pembelian'] = $pembelian_defaults['5.1.01.03']['saldo'];
+        $data['beban_produksi'] = $pembelian_defaults['5.1.01.04']['saldo'];
+        $data['beban_transport'] = $pembelian_defaults['5.1.01.05']['saldo'];
+        $data['cashback_pembelian'] = $pembelian_defaults['5.1.01.06']['saldo'];
+
+        $data['total_pembelian'] = $data['pembelian_persediaan']
+            - abs($data['diskon_pembelian'])
+            - abs($data['retur_pembelian'])
+            + abs($data['beban_produksi'])
+            + abs($data['beban_transport'])
+            - abs($data['cashback_pembelian']);
+
+        $data['total_persediaan'] = $data['persediaan_awal'] + $data['total_pembelian'];
+
+        // HPP & Persediaan Akhir
+        $vHppAkun = $pembelian_defaults['5.1.01.01']['saldo'];
+        if ($vHppAkun > 0) {
+            $data['hpp'] = $vHppAkun;
+            $data['persediaan_akhir'] = $data['total_persediaan'] - $data['hpp'];
+        } elseif ($kredit_persediaan_mutasi > 0) {
+            $data['hpp'] = $kredit_persediaan_mutasi;
+            $data['persediaan_akhir'] = $data['total_persediaan'] - $data['hpp'];
+        } else {
+            $data['persediaan_akhir'] = $data['persediaan_akhir'];
+            $data['hpp'] = $data['total_persediaan'] - $data['persediaan_akhir'];
+        }
+
+        $data['laba_kotor'] = $data['penjualan_bersih'] - $data['hpp'];
+
+        $data['total_pendapatan_lain'] = (float) collect($data['sections']['pendapatan_lain'])->sum('saldo');
+        $data['total_beban_operasional'] = (float) collect($data['sections']['beban_operasional'])->sum('saldo');
+        $data['total_pendapatan_non_usaha'] = (float) collect($data['sections']['pendapatan_non_usaha'])->sum('saldo');
+        $data['total_beban_non_usaha'] = (float) collect($data['sections']['beban_non_usaha'])->sum('saldo');
+        $data['total_beban_pajak'] = (float) collect($data['sections']['beban_pajak'])->sum('saldo');
+
+        $data['laba_sebelum_pajak'] = $data['laba_kotor'] + $data['total_pendapatan_lain'] - $data['total_beban_operasional'] + $data['total_pendapatan_non_usaha'] - $data['total_beban_non_usaha'];
+        $data['laba_bersih'] = $data['laba_sebelum_pajak'] - $data['total_beban_pajak'];
+
         return $data;
     }
 }

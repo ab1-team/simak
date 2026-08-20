@@ -1,4 +1,4 @@
-@extends('pelaporan.layout.base')
+extends('pelaporan.layout.base')
 <title>{{ $title }}</title>
 @section('content')
     <style>
@@ -24,13 +24,17 @@
         }
     </style>
     @php
-        function formatKurung($angka)
-        {
-            if ($angka < 0) {
-                return '(' . number_format(abs($angka), 2, ',', '.') . ')';
+        if (!function_exists('formatKurung')) {
+            function formatKurung($angka)
+            {
+                if ($angka < 0) {
+                    return '(' . number_format(abs($angka), 2, ',', '.') . ')';
+                }
+                return number_format($angka, 2, ',', '.');
             }
-            return number_format($angka, 2, ',', '.');
         }
+
+        $penjualan = collect($sections['penjualan'] ?? []);
     @endphp
     <table width="100%" style="font-size:11px;">
         <tr>
@@ -44,50 +48,6 @@
     <br>
 
     <table width="100%" cellspacing="0" cellpadding="0" style="font-size:11px;">
-        @php
-
-            // PENJUALAN (E)
-
-            $penjualan = collect($sections['penjualan']);
-            $penjualan_map = $penjualan->keyBy('kode_akun');
-
-            $penjualan_nilai = $penjualan_map['4.1.01.01']['saldo'] ?? 0; // A
-            $diskon = $penjualan_map['4.1.01.02']['saldo'] ?? 0; // B
-            $retur = $penjualan_map['4.1.01.03']['saldo'] ?? 0; // C
-            $cashback = $penjualan_map['4.1.01.06']['saldo'] ?? 0; // D
-
-            $total_penjualan = $penjualan_nilai - abs($diskon) - abs($retur) - abs($cashback); // E
-
-            // DATA DARI CONTROLLER
-            $g_pembelian = $pembelian_persediaan ?? 0; // G
-            $h_potongan = $potongan_pembelian ?? 0; // H
-
-            $persediaan_awal = $persediaan_awal ?? 0; // F
-            $persediaan_akhir = $persediaan_akhir ?? 0; // K
-
-            // RUMUS
-            $total_pembelian = $g_pembelian - $h_potongan; // I = G - H
-            $total_persediaan = $persediaan_awal + $total_pembelian; // J = F + I
-            $hpp = $total_persediaan - $persediaan_akhir; // L = J - K
-            $laba_kotor = $total_penjualan - $hpp; // M = E - L
-
-            // hanya akun potongan (tanpa 5.1.01.01)
-            $potongan_akun = collect($sections['pembelian'])->where('kode_akun', '!=', '5.1.01.01');
-
-        @endphp
-        @php
-            $total_beban_operasional = collect($sections['beban_operasional'])->sum('saldo');
-            $total_pendapatan_non_usaha = collect($sections['pendapatan_non_usaha'])->sum('saldo');
-            $total_beban_non_usaha = collect($sections['beban_non_usaha'])->sum('saldo');
-            $total_beban_pajak = collect($sections['beban_pajak'])->sum('saldo');
-
-            // Laba sebelum pajak
-            $laba_sebelum_pajak =
-                $laba_kotor - $total_beban_operasional + $total_pendapatan_non_usaha - $total_beban_non_usaha;
-
-            // Laba bersih
-            $laba_bersih = $laba_sebelum_pajak - $total_beban_pajak;
-        @endphp
         <tr class="bg">
             <td class="t l b r" colspan="3" align="center"><b>LABA KOTOR</b></td>
         </tr>
@@ -104,71 +64,91 @@
         <tr>
             <td class="l b"></td>
             <td class="l b r"><b>Penjualan Bersih</b></td>
-            <td class="b r" align="right"><b>{{ formatKurung($total_penjualan) }}</b></td>
+            <td class="b r" align="right"><b>{{ formatKurung($penjualan_bersih ?? 0) }}</b></td>
         </tr>
 
-        {{-- PERSEDIAAN AWAL (F) --}}
+        {{-- PERSEDIAAN AWAL --}}
         <tr>
             <td class="l b"></td>
             <td class="l b r">Persediaan Awal</td>
-            <td class="b r" align="right">{{ formatKurung($persediaan_awal) }}</td>
+            <td class="b r" align="right">{{ formatKurung($persediaan_awal ?? 0) }}</td>
         </tr>
 
-        {{-- PEMBELIAN (G) --}}
+        {{-- PEMBELIAN --}}
         <tr>
             <td class="l b"></td>
             <td class="l b r">Pembelian</td>
-            <td class="b r" align="right">{{ formatKurung($g_pembelian) }}</td>
+            <td class="b r" align="right">{{ formatKurung($pembelian_persediaan ?? 0) }}</td>
         </tr>
 
-        {{-- POTONGAN PEMBELIAN (H) --}}
-        @foreach ($potongan_akun as $acc)
-            <tr>
-                <td class="l b"></td>
-                <td class="l b r">{{ $acc['nama'] }}</td>
-                <td class="b r" align="right">{{ formatKurung($acc['saldo']) }}</td>
-            </tr>
-        @endforeach
-
-        {{-- <tr>
+        {{-- DISKON PEMBELIAN --}}
+        <tr>
             <td class="l b"></td>
-            <td class="l b r">Potongan Pembelian</td>
-            <td class="b r" align="right">{{ formatKurung($h_potongan) }}</td>
-        </tr> --}}
+            <td class="l b r">Diskon Pembelian</td>
+            <td class="b r" align="right">{{ formatKurung($diskon_pembelian ?? 0) }}</td>
+        </tr>
 
-        {{-- TOTAL PEMBELIAN (I) --}}
+        {{-- RETUR PEMBELIAN --}}
+        <tr>
+            <td class="l b"></td>
+            <td class="l b r">Retur Pembelian</td>
+            <td class="b r" align="right">{{ formatKurung($retur_pembelian ?? 0) }}</td>
+        </tr>
+
+        {{-- BEBAN PRODUKSI --}}
+        <tr>
+            <td class="l b"></td>
+            <td class="l b r">Beban Produksi</td>
+            <td class="b r" align="right">{{ formatKurung($beban_produksi ?? 0) }}</td>
+        </tr>
+
+        {{-- BEBAN TRANSPORT PRODUK --}}
+        <tr>
+            <td class="l b"></td>
+            <td class="l b r">Beban Transport Produk</td>
+            <td class="b r" align="right">{{ formatKurung($beban_transport ?? 0) }}</td>
+        </tr>
+
+        {{-- CASHBACK PEMBELIAN --}}
+        <tr>
+            <td class="l b"></td>
+            <td class="l b r">Cashback Pembelian</td>
+            <td class="b r" align="right">{{ formatKurung($cashback_pembelian ?? 0) }}</td>
+        </tr>
+
+        {{-- TOTAL PEMBELIAN --}}
         <tr>
             <td class="l b"></td>
             <td class="l b r"><b>Total Pembelian</b></td>
-            <td class="b r" align="right"><b>{{ formatKurung($total_pembelian) }}</b></td>
+            <td class="b r" align="right"><b>{{ formatKurung($total_pembelian ?? 0) }}</b></td>
         </tr>
 
-        {{-- TOTAL PERSEDIAAN (J) --}}
+        {{-- TOTAL PERSEDIAAN --}}
         <tr>
             <td class="l b"></td>
             <td class="l b r"><b>Total Persediaan</b></td>
-            <td class="b r" align="right"><b>{{ formatKurung($total_persediaan) }}</b></td>
+            <td class="b r" align="right"><b>{{ formatKurung($total_persediaan ?? 0) }}</b></td>
         </tr>
 
-        {{-- PERSEDIAAN AKHIR (K) --}}
+        {{-- PERSEDIAAN AKHIR --}}
         <tr>
             <td class="l b"></td>
             <td class="l b r">Persediaan Akhir</td>
-            <td class="b r" align="right">{{ formatKurung($persediaan_akhir) }}</td>
+            <td class="b r" align="right">{{ formatKurung($persediaan_akhir ?? 0) }}</td>
         </tr>
 
-        {{-- HPP (L) --}}
+        {{-- HPP --}}
         <tr>
             <td class="l b"></td>
             <td class="l b r"><b>Harga Pokok Penjualan</b></td>
-            <td class="b r" align="right"><b>{{ formatKurung($hpp) }}</b></td>
+            <td class="b r" align="right"><b>{{ formatKurung($hpp ?? 0) }}</b></td>
         </tr>
 
-        {{-- LABA KOTOR (M) --}}
+        {{-- LABA KOTOR --}}
         <tr>
             <td class="l b"></td>
             <td class="l b r"><b>Laba Kotor</b></td>
-            <td class="b r" align="right"><b>{{ formatKurung($laba_kotor) }}</b></td>
+            <td class="b r" align="right"><b>{{ formatKurung($laba_kotor ?? 0) }}</b></td>
         </tr>
 
         {{-- SECTION LAIN --}}
@@ -179,13 +159,16 @@
             'beban_non_usaha' => 'BEBAN NON USAHA',
             'beban_pajak' => 'BEBAN PAJAK',
         ] as $key => $label)
-            @php $total = collect($sections[$key])->sum('saldo'); @endphp
+            @php
+                $items = $sections[$key] ?? [];
+                $total = collect($items)->sum('saldo');
+            @endphp
 
             <tr class="bg">
                 <td class="t l b r" colspan="3" align="center"><b>{{ $label }}</b></td>
             </tr>
 
-            @foreach ($sections[$key] as $acc)
+            @foreach ($items as $acc)
                 <tr>
                     <td class="l b">{{ $acc['kode_akun'] }}</td>
                     <td class="l b r">{{ $acc['nama'] }}</td>
@@ -199,13 +182,33 @@
                 <td class="b r" align="right"><b>{{ formatKurung($total) }}</b></td>
             </tr>
         @endforeach
+
+        @if (!empty($total_beban_pajak) && $total_beban_pajak != 0)
+            <tr>
+                <td class="l b"></td>
+                <td class="l b r"><b>Laba Sebelum Pajak</b></td>
+                <td class="b r" align="right">
+                    <b>{{ formatKurung($laba_sebelum_pajak ?? 0) }}</b>
+                </td>
+            </tr>
+        @endif
+
         <tr>
             <td class="l b"></td>
             <td class="l b r"><b>Laba Bersih</b></td>
             <td class="b r" align="right">
-                <b>{{ formatKurung($laba_bersih) }}</b>
+                <b>{{ formatKurung($laba_bersih ?? 0) }}</b>
             </td>
         </tr>
+
+        @if (!empty($usaha->ttd->tanda_tangan_pelaporan))
+            <tr>
+                <td colspan="3" style="padding: 0px !important;">
+                    <div style="margin-top: 16px;"></div>
+                    {!! json_decode(str_replace('{tanggal}', $tanggal_kondisi ?? '', $usaha->ttd->tanda_tangan_pelaporan), true) !!}
+                </td>
+            </tr>
+        @endif
 
     </table>
 @endsection
