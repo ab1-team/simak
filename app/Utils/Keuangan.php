@@ -1052,17 +1052,18 @@ class Keuangan
         $bulanInt = intval($bulan);
         $lokasi = \Session::get('lokasi');
 
-        $accounts = Accounts::where(function ($q) {
+        $accModel = new Accounts();
+        if ($lokasi) {
+            $accModel->setTable("accounts_$lokasi");
+        }
+
+        $accounts = $accModel->where(function ($q) {
                 $q->where('kode_akun', 'LIKE', '4.%')
                     ->orWhere('kode_akun', 'LIKE', '5.%')
                     ->orWhere('kode_akun', 'LIKE', '6.%')
                     ->orWhere('kode_akun', 'LIKE', '7.%')
                     ->orWhere('kode_akun', 'LIKE', '1.1.03.%');
             })
-            ->with([
-                'saldo' => fn($q) => $q->where('tahun', $tahun)->where('bulan', 0),
-                'kom_saldo' => fn($q) => $q->where('tahun', $tahun)->where('bulan', '>=', 1)->where('bulan', '<=', $bulanInt)
-            ])
             ->get()
             ->keyBy('kode_akun');
 
@@ -1071,14 +1072,21 @@ class Keuangan
             if (!$acc) return 0;
             if ($bln < 0) return 0;
 
-            $debitAwal = (float)($acc->saldo->debit ?? 0);
-            $kreditAwal = (float)($acc->saldo->kredit ?? 0);
+            $saldoAwalRow = \DB::table("saldo_$lokasi")
+                ->where('kode_akun', $kode)
+                ->where('tahun', $tahun)
+                ->where('bulan', 0)
+                ->first();
+
+            $debitAwal = (float)($saldoAwalRow->debit ?? 0);
+            $kreditAwal = (float)($saldoAwalRow->kredit ?? 0);
+
+            $isKredit = in_array(strtolower($acc->jenis_mutasi ?? ''), ['kredit', 'k'])
+                || $acc->lev1 == 4
+                || ($acc->lev1 == 7 && str_starts_with($kode, '7.1'));
 
             if ($bln == 0) {
-                if ($acc->jenis_mutasi == 'kredit') {
-                    return $kreditAwal - $debitAwal;
-                }
-                return $debitAwal - $kreditAwal;
+                return $isKredit ? ($kreditAwal - $debitAwal) : ($debitAwal - $kreditAwal);
             }
 
             $saldos = \DB::table("saldo_$lokasi")
@@ -1091,7 +1099,7 @@ class Keuangan
             $debitMutasi = (float)$saldos->sum('debit');
             $kreditMutasi = (float)$saldos->sum('kredit');
 
-            if ($acc->jenis_mutasi == 'kredit') {
+            if ($isKredit) {
                 return ($kreditAwal - $debitAwal) + ($kreditMutasi - $debitMutasi);
             }
             return ($debitAwal - $kreditAwal) + ($debitMutasi - $kreditMutasi);
@@ -1120,9 +1128,19 @@ class Keuangan
             'sd' => $vPenjualan['sd'] + $vDiskonPenj['sd'] + $vReturPenj['sd'] + $vCashbackPenj['sd'],
         ];
 
-        // Hitung pembelian dari mutasi debit akun persediaan
+        // Hitung pembelian dari transaksi atau mutasi debit akun persediaan
         $debitPersediaan = function ($bulanEnd) use ($lokasi, $tahun) {
             if ($bulanEnd <= 0) return 0;
+            $fromTrx = (float) \DB::table("transaksi_$lokasi")
+                ->where('rekening_debit', 'LIKE', '1.1.03%')
+                ->whereYear('tgl_transaksi', $tahun)
+                ->whereMonth('tgl_transaksi', '<=', $bulanEnd)
+                ->sum('jumlah');
+
+            if ($fromTrx > 0) {
+                return $fromTrx;
+            }
+
             return (float) \DB::table("saldo_$lokasi")
                 ->where('kode_akun', 'LIKE', '1.1.03%')
                 ->where('tahun', $tahun)
@@ -1252,12 +1270,14 @@ class Keuangan
                 'saldo_sd_ini' => $vals['sd'],
             ];
 
+            $accIsKredit = in_array(strtolower($account->jenis_mutasi ?? ''), ['kredit', 'k']) || $kode1 == '4' || ($kode1 == '7' && str_starts_with($kode, '7.1'));
+
             if ($kode1 == '7' && $kode2 == '4') { // Tax
                  $group['4']['kode'][] = $saldoData;
                  $group['4']['saldo_sd_lalu'] -= $vals['lalu'];
                  $group['4']['saldo_bulan_ini'] -= $vals['ini'];
                  $group['4']['saldo_sd_ini'] -= $vals['sd'];
-            } elseif ($kode1 == '4' || ($kode1 == '7' && $account->jenis_mutasi == 'kredit')) { // Income
+            } elseif ($kode1 == '4' || ($kode1 == '7' && $accIsKredit)) { // Income
                  $group['1']['kode'][] = $saldoData;
                  $group['1']['saldo_sd_lalu'] += $vals['lalu'];
                  $group['1']['saldo_bulan_ini'] += $vals['ini'];
