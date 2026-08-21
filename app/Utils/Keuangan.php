@@ -1067,42 +1067,26 @@ class Keuangan
             ->get()
             ->keyBy('kode_akun');
 
+        // Saldo di saldo_{lokasi} per bulan sudah bersifat komulatif
         $getS = function ($kode, $bln) use ($accounts, $tahun, $lokasi) {
+            if ($bln < 0) return 0;
             $acc = $accounts->get($kode);
             if (!$acc) return 0;
-            if ($bln < 0) return 0;
 
-            $saldoAwalRow = \DB::table("saldo_$lokasi")
+            $row = \DB::table("saldo_$lokasi")
                 ->where('kode_akun', $kode)
                 ->where('tahun', $tahun)
-                ->where('bulan', 0)
+                ->where('bulan', $bln)
                 ->first();
 
-            $debitAwal = (float)($saldoAwalRow->debit ?? 0);
-            $kreditAwal = (float)($saldoAwalRow->kredit ?? 0);
+            $debit = (float)($row->debit ?? 0);
+            $kredit = (float)($row->kredit ?? 0);
 
             $isKredit = in_array(strtolower($acc->jenis_mutasi ?? ''), ['kredit', 'k'])
                 || $acc->lev1 == 4
                 || ($acc->lev1 == 7 && str_starts_with($kode, '7.1'));
 
-            if ($bln == 0) {
-                return $isKredit ? ($kreditAwal - $debitAwal) : ($debitAwal - $kreditAwal);
-            }
-
-            $saldos = \DB::table("saldo_$lokasi")
-                ->where('kode_akun', $kode)
-                ->where('tahun', $tahun)
-                ->where('bulan', '>=', 1)
-                ->where('bulan', '<=', $bln)
-                ->get();
-
-            $debitMutasi = (float)$saldos->sum('debit');
-            $kreditMutasi = (float)$saldos->sum('kredit');
-
-            if ($isKredit) {
-                return ($kreditAwal - $debitAwal) + ($kreditMutasi - $debitMutasi);
-            }
-            return ($debitAwal - $kreditAwal) + ($debitMutasi - $kreditMutasi);
+            return $isKredit ? ($kredit - $debit) : ($debit - $kredit);
         };
 
         $getV = function ($kode) use ($getS, $bulanInt) {
@@ -1112,7 +1096,7 @@ class Keuangan
             return [
                 'lalu' => $sd_lalu,
                 'ini' => $ini,
-                'sd' => $sd_lalu + $ini,
+                'sd' => $sd_ini,
             ];
         };
 
@@ -1128,25 +1112,27 @@ class Keuangan
             'sd' => $vPenjualan['sd'] + $vDiskonPenj['sd'] + $vReturPenj['sd'] + $vCashbackPenj['sd'],
         ];
 
-        // Hitung pembelian dari transaksi atau mutasi debit akun persediaan
+        // Hitung pembelian dari mutasi debit saldo / transaksi
         $debitPersediaan = function ($bulanEnd) use ($lokasi, $tahun) {
             if ($bulanEnd <= 0) return 0;
+            $row = \DB::table("saldo_$lokasi")
+                ->where('kode_akun', 'LIKE', '1.1.03%')
+                ->where('tahun', $tahun)
+                ->where('bulan', $bulanEnd)
+                ->first();
+
+            $pembelian = (float)($row->debit ?? 0);
+            if ($pembelian > 0) {
+                return $pembelian;
+            }
+
             $fromTrx = (float) \DB::table("transaksi_$lokasi")
                 ->where('rekening_debit', 'LIKE', '1.1.03%')
                 ->whereYear('tgl_transaksi', $tahun)
                 ->whereMonth('tgl_transaksi', '<=', $bulanEnd)
                 ->sum('jumlah');
 
-            if ($fromTrx > 0) {
-                return $fromTrx;
-            }
-
-            return (float) \DB::table("saldo_$lokasi")
-                ->where('kode_akun', 'LIKE', '1.1.03%')
-                ->where('tahun', $tahun)
-                ->where('bulan', '>=', 1)
-                ->where('bulan', '<=', $bulanEnd)
-                ->sum('debit');
+            return $fromTrx;
         };
 
         $pembelianSdLalu = $debitPersediaan($bulanInt - 1);
@@ -1191,11 +1177,22 @@ class Keuangan
             'sd' => $vPersediaanAwal['sd'] + $pembelianBersih['sd'],
         ];
 
-        $hpp = [
-            'lalu' => $totalPersediaan['lalu'] - $vPersediaanAkhir['lalu'],
-            'ini' => $totalPersediaan['ini'] - $vPersediaanAkhir['ini'],
-            'sd' => $totalPersediaan['sd'] - $vPersediaanAkhir['sd'],
-        ];
+        // HPP dari akun 5.1.01.01 (jika ada saldo) atau dari formula persediaan
+        $vHppFrom5 = $getV('5.1.01.01');
+        if ($vHppFrom5['sd'] != 0 || $vHppFrom5['ini'] != 0 || $vHppFrom5['lalu'] != 0) {
+            $hpp = $vHppFrom5;
+            $vPersediaanAkhir = [
+                'lalu' => $totalPersediaan['lalu'] - $hpp['lalu'],
+                'ini' => $totalPersediaan['ini'] - $hpp['ini'],
+                'sd' => $totalPersediaan['sd'] - $hpp['sd'],
+            ];
+        } else {
+            $hpp = [
+                'lalu' => $totalPersediaan['lalu'] - $vPersediaanAkhir['lalu'],
+                'ini' => $totalPersediaan['ini'] - $vPersediaanAkhir['ini'],
+                'sd' => $totalPersediaan['sd'] - $vPersediaanAkhir['sd'],
+            ];
+        }
 
         $group1_kode = [
             ['kode' => '4.1.01.01', 'nama' => 'Penjualan', 'saldo_sd_lalu' => $vPenjualan['lalu'], 'saldo_bulan_ini' => $vPenjualan['ini'], 'saldo_sd_ini' => $vPenjualan['sd']],
