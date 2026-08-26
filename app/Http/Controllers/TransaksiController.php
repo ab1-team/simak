@@ -1615,8 +1615,8 @@ class TransaksiController extends Controller
                     ->orderBy('kode_akun', 'ASC')
                     ->get();
 
-                $rek2 = Accounts::where(function ($q) {
-                    $q->whereIn('lev1', [5, 6])
+$rek2 = Accounts::where(function ($q) {
+                    $q->whereIn('lev1', [2, 5, 6])
                     ->orWhere(function ($q2) {
                         $q2->where('lev1', 7)
                             ->where('jenis_mutasi', 'debet');
@@ -1626,9 +1626,9 @@ class TransaksiController extends Controller
                             ->where('kode_akun', 'like', '1.1.04.%');
                     });
                 })
-                ->where('kode_akun', '!=', $excludedKodeAkun)
-                ->orderBy('kode_akun', 'ASC')
-                ->get();
+                    ->where('kode_akun', '!=', $excludedKodeAkun)
+                    ->orderBy('kode_akun', 'ASC')
+                    ->get();
 
                 $label2 = 'Keperluan';
             }
