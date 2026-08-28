@@ -4,7 +4,8 @@
     <div class="alert alert-info text-white fw-bold">
         <div class="text-white font-weight-bold">
             #Invoice - {{ str_pad($invoice->lokasi, 3, '0', STR_PAD_LEFT) }} {{ $invoice->usaha->nama_usaha }}
-            - {{ $invoice->status == 'PAID' ? $invoice->tgl_lunas : $invoice->tgl_invoice }} Rp. {{ number_format($invoice->jumlah, 2) }}
+            - {{ $invoice->status == 'PAID' ? $invoice->tgl_lunas : $invoice->tgl_invoice }} Rp.
+            {{ number_format($invoice->jumlah, 2) }}
         </div>
     </div>
 
@@ -96,7 +97,7 @@
                         readonly>*{{ $invoice->jp->nama_jp }}{{ $kec ? ' Kec. ' . $kec : '' }}*
 
 *Yth. {{ $invoice->usaha->nama_usaha }}*
-Terima kasih telah melakukan pembayaran *{{ $invoice->jp->nama_jp }} Kec. {{ $kec }}* sebesar *Rp. {{ number_format($nominal_bayar, 2, '.', ',') }}* pada tanggal *{{ $invoice->tgl_invoice }}*. Silakan cetak Invoice Paid di menu Pengaturan - Invoice.
+Terima kasih telah melakukan pembayaran *{{ $invoice->jp->nama_jp }} Kec. {{ $kec }}* sebesar *Rp. {{ number_format($nominal_bayar, 2, '.', ',') }}* pada tanggal *{{ $invoice->status == 'PAID' ? $invoice->tgl_lunas : $invoice->tgl_invoice }}*. Silakan cetak Invoice Paid di menu Pengaturan - Invoice.
 
 Salam,
 PT. Asta Brata Teknologi</textarea>
