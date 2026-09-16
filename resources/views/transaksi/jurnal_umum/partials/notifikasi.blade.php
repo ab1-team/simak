@@ -85,7 +85,7 @@
                         <div class="d-flex align-items-center">
                             <div class="d-flex flex-column">
                                 <h6 class="mb-0 text-dark font-small-3">
-                                    {{ $trx->rek_kredit->kode_akun }} - {{ $trx->rek_kredit->nama_akun }}
+                                    {{ $trx->rek_kredit?->kode_akun }} - {{ $trx->rek_kredit?->nama_akun }}
                                 </h6>
                                 <span class="font-small-1">{{ Tanggal::tglLatin($trx->tgl_transaksi) }}</span>
                             </div>
@@ -98,7 +98,7 @@
                         <div class="d-flex align-items-center">
                             <div class="d-flex flex-column">
                                 <h6 class="mb-0 text-dark font-small-3">
-                                    {{ $trx->rek_debit->kode_akun }} - {{ $trx->rek_debit->nama_akun }}
+                                    {{ $trx->rek_debit?->kode_akun }} - {{ $trx->rek_debit?->nama_akun }}
                                 </h6>
                                 <span class="font-small-1">{{ Tanggal::tglLatin($trx->tgl_transaksi) }}</span>
                             </div>
