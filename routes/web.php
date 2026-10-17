@@ -42,6 +42,7 @@ Route::middleware('maintenance')->group(function () {
 
         Route::get('/app', [AppController::class, 'index'])->middleware('master');
         Route::get('/app/register', [AppController::class, 'register'])->middleware('master');
+        Route::post('/app', [AppController::class, 'store'])->middleware('master');
         Route::get('/app/{usaha}', [AppController::class, 'show'])->middleware('master');
         Route::get('/app/desa/{kode}', [AppController::class, 'desa'])->middleware('master');
         Route::get('/app/kecamatan/{kode}', [AppController::class, 'kecamatan'])->middleware('master');

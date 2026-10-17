@@ -82,6 +82,82 @@ class AppController extends Controller
         ]);
     }
 
+    public function store(Request $request)
+    {
+        $data = $request->only([
+            'provinsi',
+            'kabupaten',
+            'kecamatan',
+            'desa',
+            'nama_usaha',
+            'jenis_akun',
+            'domain',
+            'domain_alternatif',
+            'tagihan_invoice',
+            'biaya_maintenance',
+            'tgl_register',
+            'tgl_pakai',
+            'masa_aktif'
+        ]);
+
+        $validate = Validator::make($data, [
+            'provinsi' => 'required',
+            'kabupaten' => 'required',
+            'kecamatan' => 'required',
+            'desa' => 'required',
+            'nama_usaha' => 'required',
+            'jenis_akun' => 'required',
+            'domain' => 'required|unique:usaha,domain',
+            'domain_alternatif' => 'required|unique:usaha,domain_alt',
+            'tagihan_invoice' => 'required',
+            'biaya_maintenance' => 'required',
+            'tgl_register' => 'required',
+            'tgl_pakai' => 'required',
+            'masa_aktif' => 'required',
+        ]);
+
+        if ($validate->fails()) {
+            return response()->json($validate->errors(), Response::HTTP_MOVED_PERMANENTLY);
+        }
+
+        $this->AddKabupaten($data['kabupaten']);
+        $this->AddKecamatan($data['kecamatan']);
+        $this->AddDesa($data['desa']);
+
+        $usaha = Usaha::create([
+            'kd_desa' => $data['desa'],
+            'nama_usaha' => $data['nama_usaha'],
+            'jenis_akun' => $data['jenis_akun'],
+            'domain' => $data['domain'],
+            'domain_alt' => $data['domain_alternatif'],
+            'tagihan_invoice' => $data['tagihan_invoice'],
+            'biaya' => str_replace(',', '', str_replace('.00', '', $data['biaya_maintenance'])),
+            'tgl_register' => Tanggal::tglNasional($data['tgl_register']),
+            'tgl_pakai' => Tanggal::tglNasional($data['tgl_pakai']),
+            'masa_aktif' => Tanggal::tglNasional($data['masa_aktif']),
+            'kepala_lembaga' => '-',
+            'badan_pengawas' => '-',
+            'kabag_administrasi' => '-',
+            'kabag_keuangan' => '-',
+            'bkk_bkm_bm' => '-',
+            'npwp' => '-',
+            'tgl_npwp' => date('Y-m-d'),
+            'nomor_bh' => '-',
+            'alamat' => '-',
+            'email' => '-',
+            'telpon' => '-',
+            'logo' => '-',
+            'background' => '-',
+            'peraturan_desa' => '-',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'msg' => 'Usaha ' . $data['nama_usaha'] . ' Berhasil Didaftarkan',
+            'id' => $usaha->id,
+        ]);
+    }
+
     public function update(Request $request, Usaha $usaha)
     {
         $data = $request->only([
@@ -194,7 +270,7 @@ class AppController extends Controller
             $kecamatan = Wilayah::where('kode', $kode)->first();
 
             $InsertKecamatan = Kecamatan::create([
-                "kd_kab" => explode('.', $kode[0]) . '.' . explode('.', $kode[1]),
+                "kd_kab" => explode('.', $kode)[0] . '.' . explode('.', $kode)[1],
                 "kd_kec" => $kode,
                 "nama_kec" => $kecamatan->nama,
                 "alamat_kec" => "-",
@@ -215,8 +291,8 @@ class AppController extends Controller
 
     private function AddDesa($kode)
     {
-        $d = Desa::where('kd_desa', $kode);
-        if ($d->count() <= 0) {
+        $d = Desa::where('kode_desa', $kode)->orWhere('kd_desa', str_replace('.', '', $kode))->first();
+        if (! $d) {
             $kd_prov = explode('.', $kode)[0];
             $kd_kab = explode('.', $kode)[1];
             $kd_kec = explode('.', $kode)[2];
@@ -249,6 +325,6 @@ class AppController extends Controller
             return $InsertDesa;
         }
 
-        return $d->first();
+        return $d ?? Desa::where('kode_desa', $kode)->first();
     }
 }

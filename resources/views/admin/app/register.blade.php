@@ -6,7 +6,7 @@
             <h5>Register Usaha Baru</h5>
         </div>
         <div class="card-body">
-            <form action="/db/app" method="post">
+            <form action="/db/app" method="post" id="FormRegisterUsaha">
                 @csrf
 
                 <div class="row">
@@ -122,6 +122,18 @@
                             <small class="text-danger" id="msg_masa_aktif"></small>
                         </div>
                     </div>
+                    <div class="col-sm-3">
+                        <div class="form-group">
+                            <label class="form-label" for="jenis_akun">Jenis Akun</label>
+                            <select class="form-control select2" name="jenis_akun" id="jenis_akun">
+                                <option value="">-- Pilih Jenis Akun --</option>
+                                <option value="5" selected>Bumdes Biasa (Rekening)</option>
+                                <option value="7">Perdagangan</option>
+                                <option value="8">Koperasi</option>
+                            </select>
+                            <small class="text-danger" id="msg_jenis_akun"></small>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="d-flex justify-content-end">
@@ -172,6 +184,34 @@
                 },
                 success: function(result) {
                     selectOption(result.data, '#kecamatan', 'Pilih Kecamatan')
+                }
+            })
+        })
+
+        $(document).on('click', '#SimpanUsaha', function(e) {
+            e.preventDefault();
+
+            $('small').html('')
+            var form = $('#FormRegisterUsaha')
+            $.ajax({
+                type: 'POST',
+                url: form.attr('action'),
+                data: form.serialize(),
+                success: function(result) {
+                    if (result.success) {
+                        Swal.fire('Berhasil', result.msg, 'success').then(() => {
+                            window.location.href = '/db/app/'
+                        })
+                    }
+                },
+                error: function(result) {
+                    const respons = result.responseJSON;
+
+                    Swal.fire('Error', 'Cek kembali input yang anda masukkan', 'error')
+                    $.map(respons, function(res, key) {
+                        $('#' + key).parent('.input-group.input-group-static').addClass('is-invalid')
+                        $('#msg_' + key).html(res)
+                    })
                 }
             })
         })
