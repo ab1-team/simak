@@ -1,8 +1,14 @@
 @php
     use App\Utils\Tanggal;
+    use App\Utils\InvoiceDiskon;
 
     $masa_aktif = $inv->usaha->masa_aktif;
     $dari = date('Y-m-d', strtotime('-' . $inv->usaha->tagihan_invoice . ' months', strtotime($masa_aktif)));
+
+    // Diskon perpanjangan: setiap 11 bulan dibayar = 1 tahun penuh (12 bulan) diskon 1 bulan.
+    // Dihitung dari jumlah & biaya karena jumlah bulan tidak disimpan.
+    $diskon = InvoiceDiskon::hitung($inv->jumlah, $inv->usaha->biaya);
+    $jumlah_bulan = $diskon['berlaku'] ? $diskon['n'] : null;
 
     if ($inv->status == 'UNPAID') {
         $tanggal = $masa_aktif;
@@ -180,33 +186,32 @@
                         {{ $inv->jp->nama_jp }} {{ strtoupper($app_name) }} {{ $inv->usaha->nama_usaha }}
                         {{ $inv->usaha->d->kec->sebutan_kec }}
                         {{ $inv->usaha->d->kec->nama_kec }}
+                        @if ($jumlah_bulan)
+                            {{ $jumlah_bulan }} Bulan
+                        @endif
                     </div>
                     <div>{{ $keterangan }}</div>
                 </td>
-                <td align="right" style="font-size: 11px;">{{ number_format($inv->jumlah, 2) }}</td>
+                <td align="right" style="font-size: 11px;">{{ number_format($diskon['subtotal'], 2) }}</td>
             </tr>
             <tr style="font-weight: bold;">
                 <td align="right" style="font-size: 11px;">Sub Total</td>
                 <td align="right" style="font-size: 11px; color: #fff; background: rgb(130, 164, 176)">
-                    {{ number_format($inv->jumlah, 2) }}
+                    {{ number_format($diskon['subtotal'], 2) }}
                 </td>
             </tr>
-            <tr style="font-weight: bold;">
-                <td align="right" style="font-size: 11px;">PPN 10%</td>
-                <td align="right" style="font-size: 11px; color: #fff; background: rgb(130, 164, 176)">
-                    {{ number_format(($inv->jumlah * 10) / 100, 2) }}
-                </td>
-            </tr>
-            <tr style="font-weight: bold;">
-                <td align="right" style="font-size: 11px;">Discount 10%</td>
-                <td align="right" style="font-size: 11px; color: #fff; background: rgb(130, 164, 176)">
-                    -{{ number_format(($inv->jumlah * 10) / 100, 2) }}
-                </td>
-            </tr>
+            @if ($diskon['bulan_diskon'] > 0)
+                <tr style="font-weight: bold;">
+                    <td align="right" style="font-size: 11px;">{{ InvoiceDiskon::labelDiskon($diskon['bulan_diskon']) }}</td>
+                    <td align="right" style="font-size: 11px; color: #fff; background: rgb(130, 164, 176)">
+                        -{{ number_format($diskon['diskon'], 2) }}
+                    </td>
+                </tr>
+            @endif
             <tr style="font-weight: bold;">
                 <td align="right" style="font-size: 11px;">TOTAL</td>
                 <td align="right" style="font-size: 11px; color: #fff; background: rgb(130, 164, 176)">
-                    {{ number_format($inv->jumlah, 2) }}
+                    {{ number_format($diskon['total'], 2) }}
                 </td>
             </tr>
         </table>

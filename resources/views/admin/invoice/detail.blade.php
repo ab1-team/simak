@@ -1,3 +1,11 @@
+@php
+    use App\Utils\Tanggal;
+
+    $masa_aktif = $invoice->usaha->masa_aktif;
+    $tagihan_invoice = (int) $invoice->usaha->tagihan_invoice;
+    $tgl_mulai = date('Y-m-d', strtotime('-' . $tagihan_invoice . ' months', strtotime($masa_aktif)));
+@endphp
+
 @extends('admin.layouts.base')
 
 @section('content')
@@ -108,6 +116,42 @@ PT. Asta Brata Teknologi</textarea>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">
+            <h5 class="mb-0">Informasi Perhitungan Masa Aktif</h5>
+        </div>
+        <div class="card-body p-2">
+            <div class="alert alert-info mb-2 p-2">
+                Pastikan <strong>usaha.masa_aktif</strong> dan <strong>usaha.tagihan_invoice</strong> sudah
+                diperbaharui.
+                <ul class="mb-0 mt-1">
+                    <li>
+                        <strong>usaha.masa_aktif</strong> adalah tanggal <strong>sampai dengan</strong> masa aktif.
+                    </li>
+                    <li>
+                        <strong>usaha.tagihan_invoice</strong> adalah jumlah bulan <strong>pengurang</strong> tanggal
+                        masa aktif untuk menentukan tanggal mulai.
+                    </li>
+                </ul>
+            </div>
+            <table class="table table-sm table-bordered mb-0" style="font-size: 13px;">
+                <tr>
+                    <th width="30%">usaha.masa_aktif</th>
+                    <td>{{ $masa_aktif ? Tanggal::tglIndo($masa_aktif) : '-' }}</td>
+                    <th width="30%">usaha.tagihan_invoice</th>
+                    <td>{{ $tagihan_invoice }} bulan</td>
+                </tr>
+                <tr>
+                    <th>Tanggal Mulai</th>
+                    <td colspan="3">
+                        {{ Tanggal::tglIndo($masa_aktif) }} - {{ $tagihan_invoice }} bulan =
+                        <strong>{{ Tanggal::tglIndo($tgl_mulai) }}</strong>
+                    </td>
+                </tr>
+            </table>
         </div>
     </div>
 @endsection
