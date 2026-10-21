@@ -146,10 +146,14 @@ class InvoiceDiskonTest extends TestCase
         }
     }
 
-    public function test_label_diskon(): void
+    public function test_nilai_kembalian_selalu_lengkap(): void
     {
-        $this->assertSame('Diskon 1 Bulan (Pembayaran Tahunan)', InvoiceDiskon::labelDiskon(1));
-        $this->assertSame('Diskon 2 Bulan (Pembayaran Tahunan)', InvoiceDiskon::labelDiskon(2));
-        $this->assertSame('Diskon 5 Bulan (Pembayaran Tahunan)', InvoiceDiskon::labelDiskon(5));
+        $hasil = InvoiceDiskon::hitung(1650000, 150000);
+
+        foreach (['m', 'bulan_diskon', 'n', 'diskon', 'subtotal', 'total'] as $kunci) {
+            $this->assertArrayHasKey($kunci, $hasil);
+            $this->assertIsInt($hasil[$kunci]);
+        }
+        $this->assertIsBool($hasil['berlaku']);
     }
 }

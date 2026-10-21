@@ -202,7 +202,7 @@
             </tr>
             @if ($diskon['bulan_diskon'] > 0)
                 <tr style="font-weight: bold;">
-                    <td align="right" style="font-size: 11px;">{{ InvoiceDiskon::labelDiskon($diskon['bulan_diskon']) }}</td>
+                    <td align="right" style="font-size: 11px;">Diskon</td>
                     <td align="right" style="font-size: 11px; color: #fff; background: rgb(130, 164, 176)">
                         -{{ number_format($diskon['diskon'], 2) }}
                     </td>

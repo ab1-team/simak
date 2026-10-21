@@ -71,12 +71,4 @@ class InvoiceDiskon
 
         return (int) round((float) $nilai);
     }
-
-    /**
-     * Label baris diskon, contoh: "Diskon 1 Bulan (Pembayaran Tahunan)".
-     */
-    public static function labelDiskon(int $bulanDiskon): string
-    {
-        return 'Diskon '.$bulanDiskon.' Bulan (Pembayaran Tahunan)';
-    }
 }
