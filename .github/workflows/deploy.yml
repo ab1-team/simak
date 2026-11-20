@@ -16,9 +16,23 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: 22
           command_timeout: 30m
+          script_stop: true
           script: |
+            set -e
             cd /home/enpii/apps/simak
-            git pull origin master
+
+            echo "== BEFORE =="
+            git log --oneline -1
+            git status --short
+
+            git stash push -m "deploy-backup-$(date +%s)" || true
+            git fetch origin master
+            git reset --hard origin/master
+
+            echo "== AFTER =="
+            git log --oneline -1
+            grep -n "select2" resources/views/transaksi/ebudgeting/index.blade.php || true
+
             docker compose -p simak-legacy up -d --build
             # Tunggu FPM siap: exec instan setelah recreate gagal bila container
             # baru saja start (race "service app is not running").
