@@ -20,5 +20,11 @@ jobs:
             cd /home/enpii/apps/simak
             git pull origin master
             docker compose -p simak-legacy up -d --build
-            docker compose exec app composer install
-            docker compose exec app php artisan optimize:clear
+            # Tunggu FPM siap: exec instan setelah recreate gagal bila container
+            # baru saja start (race "service app is not running").
+            for i in $(seq 1 30); do
+              if docker compose -p simak-legacy exec -T app php -v >/dev/null 2>&1; then break; fi
+              sleep 2
+            done
+            docker compose -p simak-legacy exec -T app composer install
+            docker compose -p simak-legacy exec -T app php artisan optimize:clear
