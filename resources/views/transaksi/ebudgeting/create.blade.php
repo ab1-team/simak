@@ -22,8 +22,7 @@
                     </td>
                 </tr>
                 @foreach ($lev1->akun2 as $lev2)
-                    @foreach ($lev2->akun3 as $lev3)
-                        @foreach ($lev3->rek as $rek)
+                    @foreach ($lev2->rek as $rek)
                             @php
                                 $nominal = 0;
                                 if ($jumlah > 0) {
@@ -50,7 +49,6 @@
                                     </div>
                                 </td>
                             </tr>
-                        @endforeach
                     @endforeach
                 @endforeach
 

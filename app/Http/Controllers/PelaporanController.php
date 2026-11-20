@@ -2014,13 +2014,12 @@ class PelaporanController extends Controller
         $data['triwulan'] = array_search($data['sub'], array_keys($title)) + 1;
         $data['akun1'] = AkunLevel1::where('lev1', '>=', '4')->with([
             'akun2',
-            'akun2.akun3',
-            'akun2.akun3.rek',
-            'akun2.akun3.rek.kom_saldo' => function ($query) use ($data) {
+            'akun2.rek',
+            'akun2.rek.kom_saldo' => function ($query) use ($data) {
                 $tahun = date('Y', strtotime($data['tgl_kondisi']));
                 $query->where('tahun', $tahun)->orderBy('bulan', 'ASC')->orderBy('kode_akun', 'ASC');
             },
-            'akun2.akun3.rek.kom_saldo.eb',
+            'akun2.rek.kom_saldo.eb',
         ])->get();
 
         $data['keuangan'] = $keuangan;

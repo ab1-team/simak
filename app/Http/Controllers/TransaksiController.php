@@ -547,9 +547,8 @@ class TransaksiController extends Controller
         if ($jumlah > 0) {
             $akun1 = AkunLevel1::where('lev1', '>=', '4')->with([
                 'akun2',
-                'akun2.akun3',
-                'akun2.akun3.rek',
-                'akun2.akun3.rek.eb' => function ($query) use ($data) {
+                'akun2.rek',
+                'akun2.rek.eb' => function ($query) use ($data) {
                     $query->where([
                         ['tahun', $data['tahun']],
                         ['bulan', $data['bulan']]
@@ -559,8 +558,7 @@ class TransaksiController extends Controller
         } else {
             $akun1 = AkunLevel1::where('lev1', '>=', '4')->with([
                 'akun2',
-                'akun2.akun3',
-                'akun2.akun3.rek'
+                'akun2.rek'
             ])->orderBy('kode_akun', 'ASC')->get();
         }
 

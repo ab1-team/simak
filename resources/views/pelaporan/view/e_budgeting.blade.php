@@ -91,8 +91,7 @@
                         <b>{{ $lev2->kode_akun }}. {{ $lev2->nama_akun }}</b>
                     </td>
                 </tr>
-                @foreach ($lev2->akun3 as $lev3)
-                    @foreach ($lev3->rek as $rek)
+                @foreach ($lev2->rek as $rek)
                         @php
                             $bg = 'rgb(230, 230, 230)';
                             if ($loop->iteration % 2 == 0) {
@@ -217,7 +216,6 @@
                             <td class="t l b r" align="right">{{ number_format($t_saldo + $saldo_kom, 2) }}</td>
                         </tr>
                     @endforeach
-                @endforeach
             @endforeach
 
             <tr style="background: rgb(150, 150, 150); font-weight: bold;">
