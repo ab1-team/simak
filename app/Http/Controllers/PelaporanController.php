@@ -2019,7 +2019,10 @@ class PelaporanController extends Controller
                 $tahun = date('Y', strtotime($data['tgl_kondisi']));
                 $query->where('tahun', $tahun)->orderBy('bulan', 'ASC')->orderBy('kode_akun', 'ASC');
             },
-            'akun2.rek.kom_saldo.eb',
+            'akun2.rek.kom_eb' => function ($query) use ($data) {
+                $tahun = date('Y', strtotime($data['tgl_kondisi']));
+                $query->where('tahun', $tahun)->whereIn('bulan', $data['bulan_tampil']);
+            },
         ])->get();
 
         $data['keuangan'] = $keuangan;

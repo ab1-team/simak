@@ -98,122 +98,74 @@
                                 $bg = 'rgba(255, 255, 255)';
                             }
 
-                            $nomor = 0;
-                            $t_saldo = 0;
-                            $t_rencana = 0;
-                            $saldo_bula_lalu = 0;
-                            $bulan_lalu = 0;
-                            $saldo_kom = 0;
-
                             $jenis_mutasi = strtolower((string) $rek->jenis_mutasi);
                             $is_beban = in_array($jenis_mutasi, ['debet', 'debit'], true);
                             if ($jenis_mutasi === '') {
                                 $is_beban = in_array((string) $rek->lev1, ['5', '6'], true);
                             }
 
-                            $urutan = 1;
+                            $saldo_by_month = $rek->kom_saldo->keyBy('bulan');
+                            $eb_by_month = $rek->kom_eb->keyBy('bulan');
+
+                            $cumulative = [];
+                            $running = 0;
+                            for ($m = 0; $m <= 12; $m++) {
+                                if ($saldo_by_month->has($m)) {
+                                    $saldo = $saldo_by_month->get($m);
+                                    $running = $is_beban
+                                        ? floatval($saldo->debit) - floatval($saldo->kredit)
+                                        : floatval($saldo->kredit) - floatval($saldo->debit);
+                                }
+                                $cumulative[$m] = $running;
+                            }
+
+                            $komulatif = $triwulan > 1 ? $cumulative[(int) $bulan_akhir] : 0;
+                            $rencana = [];
+                            $realisasi = [];
+                            foreach ($bulan_tampil as $idx => $m) {
+                                $m = (int) $m;
+                                $eb = $eb_by_month->get($m);
+                                $rencana[$idx] = $eb ? floatval($eb->jumlah) : 0;
+                                $realisasi[$idx] = $cumulative[$m] - ($cumulative[$m - 1] ?? 0);
+                            }
+                            $total = $komulatif + array_sum($realisasi);
+
+                            $kom_saldo_lalu += $komulatif;
+                            $rencana1 += $rencana[0];
+                            $bulan1 += $realisasi[0];
+                            $rencana2 += $rencana[1];
+                            $bulan2 += $realisasi[1];
+                            $rencana3 += $rencana[2];
+                            $bulan3 += $realisasi[2];
+
+                            if ($is_beban) {
+                                $r_beban1 += $rencana[0];
+                                $beban1 += $realisasi[0];
+                                $r_beban2 += $rencana[1];
+                                $beban2 += $realisasi[1];
+                                $r_beban3 += $rencana[2];
+                                $beban3 += $realisasi[2];
+                                $komulatif_beban += $komulatif;
+                            } else {
+                                $r_pendapatan1 += $rencana[0];
+                                $pendapatan1 += $realisasi[0];
+                                $r_pendapatan2 += $rencana[1];
+                                $pendapatan2 += $realisasi[1];
+                                $r_pendapatan3 += $rencana[2];
+                                $pendapatan3 += $realisasi[2];
+                                $komulatif_pendapatan += $komulatif;
+                            }
                         @endphp
                         <tr style="background: {{ $bg }};">
                             <td class="t l b">{{ $rek->kode_akun }}. {{ $rek->nama_akun }}</td>
-                            @if ($triwulan == 1)
-                                <td class="t l b" align="right">
-                                    {{ number_format($saldo_kom, 2) }}
-                                </td>
-                            @endif
-
-                            @foreach ($rek->kom_saldo as $saldo)
-                                @php
-                                    if ($bulan_lalu != 0) {
-                                        $saldo_bula_lalu = $saldo_lalu;
-                                    }
-
-                                    $bulan_lalu = $saldo->bulan;
-                                    $_saldo = floatval($saldo->kredit) - floatval($saldo->debit);
-                                    if ($is_beban) {
-                                        $_saldo = floatval($saldo->debit) - floatval($saldo->kredit);
-                                    }
-
-                                    $rencana = 0;
-                                    if ($saldo->eb) {
-                                        $rencana = $saldo->eb->jumlah;
-                                    }
-
-                                    $t_rencana += $rencana;
-                                    $saldo_lalu = $_saldo;
-                                @endphp
-
-                                @if ($triwulan > 1 && $saldo->bulan == $bulan_akhir)
-                                    @php
-                                        $saldo_kom = floatval($saldo->kredit) - floatval($saldo->debit);
-                                        if ($is_beban) {
-                                            $saldo_kom = floatval($saldo->debit) - floatval($saldo->kredit);
-                                        }
-
-                                        $kom_saldo_lalu += $saldo_kom;
-                                        if ($is_beban) {
-                                            $komulatif_beban += $saldo_kom;
-                                        } else {
-                                            $komulatif_pendapatan += $saldo_kom;
-                                        }
-                                    @endphp
-                                    <td class="t l b" align="right">
-                                        {{ number_format($saldo_kom, 2) }}
-                                    </td>
-                                @endif
-
-                                @if (in_array($saldo->bulan, $bulan_tampil) && $urutan <= 3)
-                                    @php
-                                        $_saldo -= $saldo_bula_lalu;
-
-                                        $nomor++;
-                                        if ($nomor == 1) {
-                                            $bulan1 += $_saldo;
-                                            $rencana1 += $rencana;
-                                        } elseif ($nomor == 2) {
-                                            $bulan2 += $_saldo;
-                                            $rencana2 += $rencana;
-                                        } elseif ($nomor == 3) {
-                                            $bulan3 += $_saldo;
-                                            $rencana3 += $rencana;
-                                        }
-
-                                        if ($is_beban) {
-                                            if ($nomor == 1) {
-                                                $r_beban1 += $rencana;
-                                                $beban1 += $_saldo;
-                                            } elseif ($nomor == 2) {
-                                                $r_beban2 += $rencana;
-                                                $beban2 += $_saldo;
-                                            } elseif ($nomor == 3) {
-                                                $r_beban3 += $rencana;
-                                                $beban3 += $_saldo;
-                                            }
-                                        } else {
-                                            if ($nomor == 1) {
-                                                $r_pendapatan1 += $rencana;
-                                                $pendapatan1 += $_saldo;
-                                            } elseif ($nomor == 2) {
-                                                $r_pendapatan2 += $rencana;
-                                                $pendapatan2 += $_saldo;
-                                            } elseif ($nomor == 3) {
-                                                $r_pendapatan3 += $rencana;
-                                                $pendapatan3 += $_saldo;
-                                            }
-                                        }
-
-                                        $t_saldo += $_saldo;
-
-                                        $urutan++;
-                                    @endphp
-                                    <td class="t l b" align="right">
-                                        {{ number_format($rencana, 2) }}
-                                    </td>
-                                    <td class="t l b" align="right">
-                                        {{ number_format($_saldo, 2) }}
-                                    </td>
-                                @endif
-                            @endforeach
-                            <td class="t l b r" align="right">{{ number_format($t_saldo + $saldo_kom, 2) }}</td>
+                            <td class="t l b" align="right">{{ number_format($komulatif, 2) }}</td>
+                            <td class="t l b" align="right">{{ number_format($rencana[0], 2) }}</td>
+                            <td class="t l b" align="right">{{ number_format($realisasi[0], 2) }}</td>
+                            <td class="t l b" align="right">{{ number_format($rencana[1], 2) }}</td>
+                            <td class="t l b" align="right">{{ number_format($realisasi[1], 2) }}</td>
+                            <td class="t l b" align="right">{{ number_format($rencana[2], 2) }}</td>
+                            <td class="t l b" align="right">{{ number_format($realisasi[2], 2) }}</td>
+                            <td class="t l b r" align="right">{{ number_format($total, 2) }}</td>
                         </tr>
                     @endforeach
             @endforeach
