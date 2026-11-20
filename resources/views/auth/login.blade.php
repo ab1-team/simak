@@ -45,7 +45,7 @@
                                     <div class="row">
                                         <div class="col-lg-6 col-12 p-0 text-center d-none d-lg-block">
                                             <div class="d-flex justify-content-center align-items-center h-100">
-                                                <img src="{{ $logo }}" 
+                                                <img src="{{ $logo }}"
                                                     class="card-account-img width-200 rounded-circle"
                                                     alt="card-account-img">
                                             </div>
