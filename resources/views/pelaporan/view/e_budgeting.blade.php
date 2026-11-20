@@ -106,6 +106,12 @@
                             $bulan_lalu = 0;
                             $saldo_kom = 0;
 
+                            $jenis_mutasi = strtolower((string) $rek->jenis_mutasi);
+                            $is_beban = in_array($jenis_mutasi, ['debet', 'debit'], true);
+                            if ($jenis_mutasi === '') {
+                                $is_beban = in_array((string) $rek->lev1, ['5', '6'], true);
+                            }
+
                             $urutan = 1;
                         @endphp
                         <tr style="background: {{ $bg }};">
@@ -124,7 +130,7 @@
 
                                     $bulan_lalu = $saldo->bulan;
                                     $_saldo = floatval($saldo->kredit) - floatval($saldo->debit);
-                                    if ($rek->lev1 == 5) {
+                                    if ($is_beban) {
                                         $_saldo = floatval($saldo->debit) - floatval($saldo->kredit);
                                     }
 
@@ -140,11 +146,16 @@
                                 @if ($triwulan > 1 && $saldo->bulan == $bulan_akhir)
                                     @php
                                         $saldo_kom = floatval($saldo->kredit) - floatval($saldo->debit);
-                                        if ($rek->lev1 == 5) {
+                                        if ($is_beban) {
                                             $saldo_kom = floatval($saldo->debit) - floatval($saldo->kredit);
                                         }
 
                                         $kom_saldo_lalu += $saldo_kom;
+                                        if ($is_beban) {
+                                            $komulatif_beban += $saldo_kom;
+                                        } else {
+                                            $komulatif_pendapatan += $saldo_kom;
+                                        }
                                     @endphp
                                     <td class="t l b" align="right">
                                         {{ number_format($saldo_kom, 2) }}
@@ -167,6 +178,30 @@
                                             $rencana3 += $rencana;
                                         }
 
+                                        if ($is_beban) {
+                                            if ($nomor == 1) {
+                                                $r_beban1 += $rencana;
+                                                $beban1 += $_saldo;
+                                            } elseif ($nomor == 2) {
+                                                $r_beban2 += $rencana;
+                                                $beban2 += $_saldo;
+                                            } elseif ($nomor == 3) {
+                                                $r_beban3 += $rencana;
+                                                $beban3 += $_saldo;
+                                            }
+                                        } else {
+                                            if ($nomor == 1) {
+                                                $r_pendapatan1 += $rencana;
+                                                $pendapatan1 += $_saldo;
+                                            } elseif ($nomor == 2) {
+                                                $r_pendapatan2 += $rencana;
+                                                $pendapatan2 += $_saldo;
+                                            } elseif ($nomor == 3) {
+                                                $r_pendapatan3 += $rencana;
+                                                $pendapatan3 += $_saldo;
+                                            }
+                                        }
+
                                         $t_saldo += $_saldo;
 
                                         $urutan++;
@@ -184,28 +219,6 @@
                     @endforeach
                 @endforeach
             @endforeach
-
-            @php
-                if ($lev1->lev1 == 4) {
-                    $r_pendapatan1 += $rencana1;
-                    $r_pendapatan2 += $rencana2;
-                    $r_pendapatan3 += $rencana3;
-
-                    $pendapatan1 += $bulan1;
-                    $pendapatan2 += $bulan2;
-                    $pendapatan3 += $bulan3;
-                    $komulatif_pendapatan += $kom_saldo_lalu;
-                } else {
-                    $r_beban1 += $rencana1;
-                    $r_beban2 += $rencana2;
-                    $r_beban3 += $rencana3;
-
-                    $beban1 += $bulan1;
-                    $beban2 += $bulan2;
-                    $beban3 += $bulan3;
-                    $komulatif_beban += $kom_saldo_lalu;
-                }
-            @endphp
 
             <tr style="background: rgb(150, 150, 150); font-weight: bold;">
                 <td align="center" class="t l b" height="14">Total Realisasi {{ $lev1->nama_akun }}</td>

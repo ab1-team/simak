@@ -121,9 +121,10 @@ class TransaksiController extends Controller
     public function ebudgeting()
     {
         $kec = Kecamatan::where('id', Session::get('lokasi'))->first();
+        $usaha = Usaha::where('id', Session::get('lokasi'))->first();
 
         $title = 'E - Budgeting';
-        return view('transaksi.ebudgeting.index')->with(compact('title', 'kec'));
+        return view('transaksi.ebudgeting.index')->with(compact('title', 'kec', 'usaha'));
     }
 
     public function jurnalTutupBuku()

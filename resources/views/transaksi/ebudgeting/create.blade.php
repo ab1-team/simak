@@ -30,10 +30,12 @@
                                     $nominal = $rek->eb->jumlah;
                                 }
 
-                                $group = 'pendapatan';
-                                if ($lev1->lev1 == '5') {
-                                    $group = 'beban';
+                                $jenis_mutasi = strtolower((string) $rek->jenis_mutasi);
+                                $is_beban = in_array($jenis_mutasi, ['debet', 'debit'], true);
+                                if ($jenis_mutasi === '') {
+                                    $is_beban = in_array((string) $rek->lev1, ['5', '6'], true);
                                 }
+                                $group = $is_beban ? 'beban' : 'pendapatan';
 
                                 $total += $nominal;
                             @endphp
@@ -41,7 +43,8 @@
                                 <td style="vertical-align: middle;">{{ $rek->kode_akun }}. {{ $rek->nama_akun }}</td>
                                 <td style="vertical-align: middle;">
                                     <div class="input-group input-group-dynamic mb-0">
-                                        <input data-group="{{ $group }}" autocomplete="off" type="text"
+                                        <input data-group="{{ $group }}" data-lev1="{{ $lev1->kode_akun }}"
+                                            autocomplete="off" type="text"
                                             name="jumlah[{{ $rek->kode_akun }}]" id="{{ $rek->kode_akun }}"
                                             class="form-control nominal" value="{{ number_format($nominal, 2) }}">
                                     </div>
@@ -56,7 +59,8 @@
                         <b>Total Rencana {{ $lev1->nama_akun }}</b>
                     </td>
                     <td>
-                        <div id="{{ strtolower($lev1->nama_akun) }}">{{ number_format($total, 2) }}</div>
+                        <div class="total-rencana" data-lev1="{{ $lev1->kode_akun }}">
+                            {{ number_format($total, 2) }}</div>
                     </td>
                 </tr>
             @endforeach
@@ -78,27 +82,21 @@
         allowNegative: true
     });
 
-    $(document).on('change', '[data-group=pendapatan]', function() {
-        var total = 0;
-        $.each($('[data-group=pendapatan]'), function(key, value) {
-            if ($(this).val() == '') $(this).val('0.00')
-            var nominal = $(this).val().split(',').join('')
+    function hitungTotalRencana() {
+        $('.total-rencana').each(function() {
+            var kode = $(this).data('lev1')
+            var total = 0
 
-            total += parseInt(nominal)
+            $('input.nominal[data-lev1="' + kode + '"]').each(function() {
+                if ($(this).val() == '') $(this).val('0.00')
+                var nominal = $(this).val().split(',').join('')
+
+                total += parseInt(nominal) || 0
+            })
+
+            $(this).html(formatter.format(total))
         })
+    }
 
-        $('#pendapatan').html(formatter.format(total))
-    })
-
-    $(document).on('change', '[data-group=beban]', function() {
-        var total = 0;
-        $.each($('[data-group=beban]'), function(key, value) {
-            if ($(this).val() == '') $(this).val('0.00')
-            var nominal = $(this).val().split(',').join('')
-
-            total += parseInt(nominal)
-        })
-
-        $('#beban').html(formatter.format(total))
-    })
+    $(document).on('change', '.nominal', hitungTotalRencana)
 </script>

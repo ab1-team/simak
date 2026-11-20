@@ -6,20 +6,35 @@
             <form action="/transaksi/anggaran" method="post" id="formAnggaran">
                 @csrf
 
+                @php
+                    $th_pakai = $usaha && $usaha->tgl_pakai ? (int) explode('-', $usaha->tgl_pakai)[0] : (int) date('Y');
+                @endphp
+
                 <div class="row">
-                    <div class="col-sm-6">
-                        <div class="input-group input-group-static my-3">
-                            <label for="tahun">Tahun</label>
-                            <input autocomplete="off" type="number" name="tahun" id="tahun" class="form-control"
-                                value="{{ date('Y') }}">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label" for="tahun">Tahun</label>
+                            <select class="form-control select2" name="tahun" id="tahun">
+                                @for ($i = $th_pakai; $i <= (int) date('Y') + 1; $i++)
+                                    <option value="{{ $i }}" {{ $i == (int) date('Y') ? 'selected' : '' }}>
+                                        {{ $i }}
+                                    </option>
+                                @endfor
+                            </select>
                             <small class="text-danger" id="msg_tahun"></small>
                         </div>
                     </div>
-                    <div class="col-sm-6">
-                        <div class="input-group input-group-static my-3">
-                            <label for="bulan">Bulan</label>
-                            <input autocomplete="off" type="number" name="bulan" id="bulan" class="form-control"
-                                value="{{ date('m') }}" max="12" min="01">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label" for="bulan">Bulan</label>
+                            <select class="form-control select2" name="bulan" id="bulan">
+                                @for ($i = 1; $i <= 12; $i++)
+                                    @php $bln = str_pad($i, 2, '0', STR_PAD_LEFT); @endphp
+                                    <option value="{{ $i }}" {{ $i == (int) date('m') ? 'selected' : '' }}>
+                                        {{ $bln }}. {{ strtoupper(\App\Utils\Tanggal::namaBulan(date('Y') . '-' . $bln . '-01')) }}
+                                    </option>
+                                @endfor
+                            </select>
                             <small class="text-danger" id="msg_bulan"></small>
                         </div>
                     </div>

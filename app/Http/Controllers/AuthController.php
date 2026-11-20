@@ -382,7 +382,7 @@ class AuthController extends Controller
 
         $lokasi = Session::get('lokasi');
         DB::statement("CREATE TABLE akun_$lokasi LIKE akun_1");
-        DB::statement("CREATE TABLE ebudgeting_$lokasi LIKE transaksi_1");
+        DB::statement("CREATE TABLE ebudgeting_$lokasi LIKE ebudgeting_1");
         DB::statement("CREATE TABLE inventaris_$lokasi LIKE inventaris_1");
         DB::statement("CREATE TABLE rekening_$lokasi LIKE rekening_1");
         DB::statement("CREATE TABLE transaksi_$lokasi LIKE transaksi_1");
