@@ -537,33 +537,38 @@ class TransaksiController extends Controller
             return response()->json($validate->errors(), Response::HTTP_MOVED_PERMANENTLY);
         }
 
-        $cek = Ebudgeting::where([
-            ['tahun', $request->tahun],
-            ['bulan', $request->bulan]
-        ])->orderBy('bulan', 'ASC')->orderBy('kode_akun', 'ASC');
+        $tahun = (int) $request->tahun;
+        $bulan = (int) $request->bulan;
 
-        $jumlah = $cek->count();
+        $jumlah = Ebudgeting::where([
+            ['tahun', $tahun],
+            ['bulan', $bulan]
+        ])->count();
 
-        if ($jumlah > 0) {
-            $akun1 = AkunLevel1::where('lev1', '>=', '4')->with([
-                'akun2',
-                'akun2.rek',
-                'akun2.rek.eb' => function ($query) use ($data) {
-                    $query->where([
-                        ['tahun', $data['tahun']],
-                        ['bulan', $data['bulan']]
-                    ]);
-                },
-            ])->orderBy('kode_akun', 'ASC')->get();
-        } else {
-            $akun1 = AkunLevel1::where('lev1', '>=', '4')->with([
-                'akun2',
-                'akun2.rek'
-            ])->orderBy('kode_akun', 'ASC')->get();
+        $sumber_tahun = $tahun;
+        $sumber_bulan = $bulan;
+
+        if ($jumlah == 0) {
+            $sebelumnya = Ebudgeting::where(function ($query) use ($tahun, $bulan) {
+                $query->where('tahun', '<', $tahun)
+                    ->orWhere(function ($q) use ($tahun, $bulan) {
+                        $q->where('tahun', $tahun)->where('bulan', '<', $bulan);
+                    });
+            })->orderByDesc('tahun')->orderByDesc('bulan')->first();
+
+            if ($sebelumnya) {
+                $sumber_tahun = $sebelumnya->tahun;
+                $sumber_bulan = $sebelumnya->bulan;
+            }
         }
 
-        $bulan = $request->bulan;
-        $tahun = $request->tahun;
+        $akun1 = AkunLevel1::where('lev1', '>=', '4')->with([
+            'akun2',
+            'akun2.rek',
+            'akun2.rek.eb' => function ($query) use ($sumber_tahun, $sumber_bulan) {
+                $query->where('tahun', $sumber_tahun)->where('bulan', $sumber_bulan);
+            },
+        ])->orderBy('kode_akun', 'ASC')->get();
 
         return response()->json([
             'success' => true,

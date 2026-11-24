@@ -24,10 +24,7 @@
                 @foreach ($lev1->akun2 as $lev2)
                     @foreach ($lev2->rek as $rek)
                             @php
-                                $nominal = 0;
-                                if ($jumlah > 0) {
-                                    $nominal = $rek->eb->jumlah;
-                                }
+                                $nominal = $rek->eb ? $rek->eb->jumlah : 0;
 
                                 $jenis_mutasi = strtolower((string) $rek->jenis_mutasi);
                                 $is_beban = in_array($jenis_mutasi, ['debet', 'debit'], true);
