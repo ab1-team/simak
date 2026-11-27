@@ -100,6 +100,10 @@ class PelaporanController extends Controller
                     'title' => '04. Oktober - Desember',
                     'id' => '10,11,12',
                 ],
+                4 => [
+                    'title' => '05. Rekap Januari - Desember',
+                    'id' => '1,2,3,4,5,6,7,8,9,10,11,12',
+                ],
             ];
 
             return view('pelaporan.partials.sub_laporan')->with(compact('file', 'data'));
@@ -1995,6 +1999,7 @@ class PelaporanController extends Controller
             '4,5,6' => 'April - Juni',
             '7,8,9' => 'Juli - September',
             '10,11,12' => 'Oktober - Desember',
+            '1,2,3,4,5,6,7,8,9,10,11,12' => 'Januari - Desember',
         ];
 
         $tgl = $thn.'-'.$bln.'-'.$hari;
@@ -2011,6 +2016,7 @@ class PelaporanController extends Controller
 
         $data['bulan_akhir'] = $awal - 1;
         $data['bulan_tampil'] = $bulan;
+        $data['rekap'] = count($bulan) > 3;
         $data['triwulan'] = array_search($data['sub'], array_keys($title)) + 1;
         $data['akun1'] = AkunLevel1::where('lev1', '>=', '4')->with([
             'akun2',
@@ -2026,7 +2032,10 @@ class PelaporanController extends Controller
         ])->get();
 
         $data['keuangan'] = $keuangan;
-        $view = view('pelaporan.view.e_budgeting', $data)->render();
+        $viewName = !empty($data['rekap'])
+            ? 'pelaporan.view.e_budgeting_rekap'
+            : 'pelaporan.view.e_budgeting';
+        $view = view($viewName, $data)->render();
 
         if ($data['type'] == 'pdf') {
             $pdf = PDF::loadHTML($view)->setPaper('A4', 'landscape');
